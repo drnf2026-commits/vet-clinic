@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>معمل دكتورة نجلاء لتشخيص أمراض الدواجن | لوحة التحكم المتكاملة</title>
+  <!-- ملف التنسيق البصري المتجاوب -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- شريط الموبايل العلوي للتنقل -->
+  <div class="mobile-top-bar">
+    <button class="menu-toggle-btn" id="menu-toggle-btn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+    </button>
+    <div class="mobile-logo-area">
+      <img src="logo.jpg" alt="Logo" class="mobile-logo-img">
+      <span class="mobile-logo-title">معمل دكتورة نجلاء</span>
+    </div>
+  </div>
+
+  <!-- حاوية التطبيق الرئيسية -->
+  <div class="dashboard-container">
+    
+    <!-- العمود الجانبي (Sidebar) -->
+    <aside class="sidebar" id="sidebar-drawer">
+      <div class="sidebar-header">
+        <div class="clinic-logo" style="background: none; box-shadow: none;">
+          <img src="logo.jpg" alt="Logo" style="width: 48px; height: 48px; border-radius: 8px; object-fit: cover; border: 1.5px solid #ffcc00;">
+        </div>
+        <div class="clinic-info">
+          <span class="clinic-name">معمل دكتورة نجلاء</span>
+          <span class="clinic-title">لتشخيص أمراض الدواجن</span>
+        </div>
+        <!-- زر إغلاق القائمة للموبايل -->
+        <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
+      </div>
+
+      <!-- قائمة التبويبات الـ 8 الرئيسية -->
+      <nav class="sidebar-nav">
+        <div class="nav-item active" id="nav-dashboard" onclick="switchTab('dashboard')">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          <span>لوحة التحكم</span>
+        </div>
+        <div class="nav-item" id="nav-clients" onclick="switchTab('clients')">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          <span>العملاء والتاريخ المرضي</span>
+        </div>
+        <div class="nav-item" id="nav-farms" onclick="switchTab('farms')">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H5v-2h5v2zm0-4H5v-2h5v2zm0-4H5V7h5v2zm9 8h-7v-2h7v2zm0-4h-7v-2h7v2zm0-4h-7V7h7v2z"/></svg>
+          <span>العنابر والمستودعات</span>
+        </div>
+        <div class="nav-item" id="nav-visits" onclick="switchTab('visits')">
+          <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
+          <span>تسجيل كشف جديد</span>
+        </div>
+        <div class="nav-item" id="nav-pharmacy" onclick="switchTab('pharmacy')">
+          <svg viewBox="0 0 24 24"><path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15z M19 3H5c-1.1 0-2 .9-2 2v3h18V5c0-1.1-.9-2-2-2z M21 16H3v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3z"/></svg>
+          <span>مكاتب الأدوية والمخزون</span>
+        </div>
+        <div class="nav-item" id="nav-vaccinations" onclick="switchTab('vaccinations')">
+          <svg viewBox="0 0 24 24"><path d="M19 3h-2.25a1 1 0 0 0-1-1h-7.5a1 1 0 0 0-1 1H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-7 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm5 12H7v-2h10v2zm0-4H7v-2h10v2z"/></svg>
+          <span>التحصينات</span>
+        </div>
+        <div class="nav-item" id="nav-accounts" onclick="switchTab('accounts')">
+          <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2-.9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          <span>الحسابات والتحصيلات</span>
+        </div>
+        <div class="nav-item" id="nav-backup" onclick="switchTab('backup')">
+          <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95C8.08 7.14 9.94 6 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11c1.56.1 2.78 1.41 2.78 2.96 0 1.65-1.35 3-3 3z"/></svg>
+          <span>النسخ والربط السحابي</span>
+        </div>
+      </nav>
+
+      <!-- حالة المزامنة في الأسفل -->
+      <div class="sidebar-footer">
+        <div class="sync-badge" id="sync-status-badge">
+          <span class="dot"></span>
+          <span class="status-text" id="sync-status-text">تخزين محلي فقط (مستقر)</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- المحتوى الرئيسي (Main Content Area) -->
+    <main class="main-content">
+      
+      <!-- الشريط العلوي (Top Header) -->
+      <header class="main-header">
+        <div class="search-wrapper">
+          <div class="search-input-container">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" class="search-input" id="main-breeder-search" placeholder="ابحث باسم العميل أو المزرعة أو مكاتب الأدوية..." autocomplete="off">
+          </div>
+          <div class="search-suggestions" id="search-suggestions-dropdown"></div>
+        </div>
+
+        <div class="doctor-meta">
+          <span class="doc-badge">معمل تشخيصي استشاري</span>
+          <div class="doc-name">دكتورة نجلاء - أمراض دواجن</div>
+        </div>
+      </header>
+
+      <!-- 1. تبويب لوحة التحكم العامة (Dashboard) -->
+      <section class="tab-content active" id="tab-dashboard-content">
+        <!-- كروت الإحصائيات العامة -->
+        <div class="stats-grid">
+          <div class="stat-card" style="border-right: 4px solid var(--accent-cyan);">
+            <span class="stat-label">👥 إجمالي العملاء</span>
+            <span class="stat-val" id="stat-total-breeders">0</span>
+          </div>
+          <div class="stat-card" style="border-right: 4px solid var(--accent-blue);">
+            <span class="stat-label">🏠 إجمالي العنابر</span>
+            <span class="stat-val" id="stat-total-farms">0</span>
+          </div>
+          <div class="stat-card" style="border-right: 4px solid var(--color-success);">
+            <span class="stat-label">🩺 إجمالي الكشوفات والزيارات</span>
+            <span class="stat-val" id="stat-total-visits">0</span>
+          </div>
+          <div class="stat-card" style="border-right: 4px solid var(--color-warning);">
+            <span class="stat-label">💊 مكاتب الأدوية المسجلة</span>
+            <span class="stat-val" id="stat-total-pharmacies">0</span>
+          </div>
+        </div>
+
+        <!-- أزرار الإجراءات السريعة -->
+        <div class="card-glass" style="margin-top: 24px;">
+          <h3 class="card-title">🚀 روابط إجراءات سريعة</h3>
+          <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px;">
+            <button class="btn-primary" onclick="openAddBreederModal()">➕ تسجيل عميل جديد</button>
+            <button class="btn-secondary-outline" onclick="switchTab('visits')">📝 فتح كشف طبي جديد</button>
+            <button class="btn-secondary-outline" onclick="openAddPharmacyModal()">🏢 تسجيل مكتب أدوية</button>
+            <button class="btn-secondary-outline" onclick="openAddFarmModal()">🚜 تسجيل عنبر/مزرعة</button>
+          </div>
+        </div>
+        
+        <!-- الحالات الأخيرة بالمعمل -->
+        <div class="card-glass" style="margin-top: 24px;">
+          <h3 class="card-title">📅 الكشوفات الأخيرة بالمعمل</h3>
+          <div style="overflow-x: auto; margin-top: 15px;">
+            <table class="med-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>اسم العميل</th>
+                  <th>العنبر</th>
+                  <th>العمر</th>
+                  <th>التاريخ</th>
+                  <th>التشخيص النهائي</th>
+                  <th>الإجراء</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-recent-visits-rows">
+                <!-- تعبأ ديناميكياً -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. تبويب العملاء والتاريخ المرضي الموحد (Clients) -->
+      <section class="tab-content" id="tab-clients-content">
+        <div class="card-glass" id="no-client-selected-view" style="text-align: center; padding: 60px 20px;">
+          <div style="font-size: 64px; margin-bottom: 20px;">🔍</div>
+          <h2>اختر العميل لاستعراض تاريخه الموحد</h2>
+          <p style="color: var(--text-muted); margin-top: 10px; font-size: 13px;">
+            اكتب اسم المربي في شريط البحث العلوي واختره لتحميل كارت البيانات، مزارعه، العلاجات السابقة والدورات.
+          </p>
+        </div>
+
+        <div class="customer-dashboard-layout" id="client-dashboard-view" style="display: none;">
+          <!-- العمود الجانبي للعميل -->
+          <div class="customer-sidebar-grid">
+            <!-- كارت الموقف المالي للعميل -->
+            <div class="card-glass">
+              <h3 class="card-title">💵 الموقف المالي القائم</h3>
+              <div class="financial-banner" id="breeder-financial-banner">
+                <span class="status-title">إجمالي المديونية التراكمية</span>
+                <span class="amount" id="financial-debt-amount">0 <span class="currency">ج.م</span></span>
+              </div>
+              <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 15px;" id="financial-notes-display"></p>
+              <button class="btn-primary" style="width: 100%; justify-content: center;" onclick="openSettleDebtModal()">
+                💵 تسوية مديونية العميل
+              </button>
+            </div>
+
+            <!-- كارت الملف الشخصي والمكتب المفضل -->
+            <div class="card-glass">
+              <h3 class="card-title">👤 ملف المربي ومزارعه</h3>
+              <div class="breeder-profile-info">
+                <div class="info-row">
+                  <span class="label">اسم المربي</span>
+                  <span class="val" id="profile-name">-</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">الهاتف</span>
+                  <span class="val" id="profile-phone">-</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">الموقع</span>
+                  <span class="val" id="profile-address">-</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">المكتب المفضل</span>
+                  <span class="val" id="profile-preferred-pharmacy" style="color: var(--accent-cyan); font-weight:bold;">-</span>
+                </div>
+                <div class="info-row" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+                  <span class="label">🏡 العنابر والمستودعات المسجلة</span>
+                  <div id="profile-farms-list" style="width: 100%; display: flex; flex-direction: column; gap: 5px; margin-top: 5px;">
+                    <!-- عنابر المربي -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- العمود الرئيسي للعميل -->
+          <div class="dashboard-main-area">
+            <!-- كروت تحذيرات فترات الأمان للأدوية -->
+            <div class="card-glass" id="active-withdrawal-warnings-card" style="display: none; border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.05);">
+              <h3 class="card-title" style="color: var(--color-danger); border-bottom-color: rgba(244, 63, 94, 0.1);">⚠️ تحذير: أدوية سابقة في فترة الأمان البيولوجي</h3>
+              <ul style="padding-right: 20px; font-size: 13px; color: var(--text-main); line-height: 1.6;" id="withdrawal-warnings-list">
+                <!-- تعبأ تلقائياً -->
+              </ul>
+            </div>
+
+            <!-- سجل العلاجات والأدوية السابقة -->
+            <div class="card-glass">
+              <h3 class="card-title">💊 أخر العلاجات المستخدمة للقطعان</h3>
+              <div style="overflow-x: auto;">
+                <table class="med-table">
+                  <thead>
+                    <tr>
+                      <th>اسم الدواء</th>
+                      <th>تاريخ الصرف</th>
+                      <th>المادة الفعالة</th>
+                      <th>حالة فترة الأمان (Withdrawal)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="breeder-medicines-history-rows">
+                    <!-- تعبأ ديناميكياً -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- تقرير الدورات الحيوية -->
+            <div class="card-glass" style="margin-top: 20px;">
+              <h3 class="card-title">📊 تقرير تلخيصي للدورات السابقة والنافق</h3>
+              <div class="form-group">
+                <label for="dashboard-cycle-selector">اختر الدورة الإنتاجية المستهدفة:</label>
+                <select class="form-select" id="dashboard-cycle-selector" onchange="renderCycleReport(this.value)">
+                  <option value="">-- اختر الدورة --</option>
+                </select>
+              </div>
+              <div id="cycle-report-content" style="display: none; padding: 15px; background: rgba(15, 23, 42, 0.4); border: 1px dashed var(--border-color); border-radius: var(--radius-md); margin-top: 15px;">
+                <!-- التقرير ديناميكياً -->
+              </div>
+            </div>
+
+            <!-- سجل الزيارات الميدانية المفصلة للعميل -->
+            <div class="card-glass" style="margin-top: 20px;">
+              <h3 class="card-title">🩺 السجل التاريخي للزيارات والكشوفات</h3>
+              <div id="breeder-visits-timeline" style="margin-top: 15px;">
+                <!-- خط زيارات العميل -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. تبويب العنابر والمستودعات (Farms) -->
+      <section class="tab-content" id="tab-farms-content">
+        <div class="card-glass">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 class="card-title" style="border:none; margin:0; padding:0;">🚜 إدارة العنابر والمستودعات</h3>
+            <button class="btn-primary" onclick="openAddFarmModal()">➕ إضافة عنبر جديد</button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="med-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>اسم المربي</th>
+                  <th>اسم العنبر</th>
+                  <th>نوع الطيور</th>
+                  <th>السلالة</th>
+                  <th>السعة</th>
+                  <th>الحالة</th>
+                  <th>تحصينات العنبر</th>
+                </tr>
+              </thead>
+              <tbody id="farms-table-rows">
+                <!-- تعبأ ديناميكياً -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. تبويب الزيارات والكشف الطبي (Visits) -->
+      <section class="tab-content" id="tab-visits-content">
+        <form id="new-visit-form" onsubmit="handleSaveVisit(event)">
+          <div class="form-grid">
+            <!-- الكارت 1: هوية العميل ومكانه والعنبر -->
+            <div class="card-glass">
+              <h3 class="card-title">👤 تحديد العميل والبلد والعنبر</h3>
+              
+              <div class="form-group" style="position: relative;">
+                <label for="visit-breeder-name">اسم العميل (مربي الدواجن) *</label>
+                <input type="text" class="form-input" id="visit-breeder-name" placeholder="اكتب اسم العميل للبحث والربط أو تسجيله كعميل جديد..." required autocomplete="off" oninput="handleFormBreederSearch(this.value)">
+                <div class="form-breeder-suggestions" id="form-breeder-results-dropdown"></div>
+              </div>
+
+              <div class="form-group">
+                <label for="visit-breeder-phone">رقم الهاتف / الموبايل *</label>
+                <input type="tel" class="form-input" id="visit-breeder-phone" placeholder="أدخل رقم الموبايل المكون من 11 رقماً..." required>
+              </div>
+
+              <div class="form-group">
+                <label for="visit-breeder-address">العنوان الجغرافي / المزرعة *</label>
+                <input type="text" class="form-input" id="visit-breeder-address" placeholder="المحافظة - المركز - القرية..." required oninput="checkRegionOutbreaks(this.value)">
+                <div id="form-epidemic-warning-box" style="display: none; margin-top: 8px; padding: 10px; border-right: 4px solid var(--color-warning); background: rgba(245, 158, 11, 0.08); border-radius: 4px; font-size: 12px; color: var(--text-main);"></div>
+              </div>
+
+              <!-- اختيار العنبر المحدد للمربي المختار -->
+              <div class="form-group">
+                <label for="visit-farm-select">اختر عنبر الكشف *</label>
+                <select class="form-select" id="visit-farm-select" required onchange="handleVisitFarmSelect(this.value)">
+                  <option value="">-- يرجى اختيار العميل أولاً لتعبئة العنابر --</option>
+                </select>
+              </div>
+
+              <!-- التنبيه الخاص بالمكتب البيطري المفضل ومخزونه -->
+              <div id="visit-preferred-pharmacy-alert" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px; border: 1px solid rgba(14,165,233,0.3); background: rgba(14,165,233,0.05); font-size: 12px;">
+                <!-- تفاصيل مكتب الأدوية المعتاد -->
+              </div>
+            </div>
+
+            <!-- الكارت 2: الحالة الفنية للقطيع والعمر والنفوق -->
+            <div class="card-glass">
+              <h3 class="card-title">🐣 الحالة الحالية والنفوق والحرارة</h3>
+              
+              <div class="form-group">
+                <label for="visit-cycle">الدورة الإنتاجية الحالية (مثال: دورة يوليو 2026)*</label>
+                <input type="text" class="form-input" id="visit-cycle" placeholder="أدخل اسم أو رقم الدورة الحالية..." required>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label for="visit-bird-type">نوع الطيور</label>
+                  <select class="form-select" id="visit-bird-type">
+                    <option value="تسمين">تسمين (أبيض)</option>
+                    <option value="بياض">بياض</option>
+                    <option value="أمهات">أمهات</option>
+                    <option value="بلدي">بلدي محسن/هجين</option>
+                    <option value="بط">بط</option>
+                    <option value="حمام">حمام/أخرى</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="visit-breed">سلالة القطيع</label>
+                  <input type="text" class="form-input" id="visit-breed" placeholder="روس، كوب، هبارد، لوهمان...">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label for="visit-hatchery">الشركة المصدر (المفرخ)</label>
+                  <input type="text" class="form-input" id="visit-hatchery" placeholder="الوادى، القاهرة، الوطنية...">
+                </div>
+                <div class="form-group">
+                  <label for="visit-capacity">العدد الإجمالي عند التسكين (سعة القطيع)</label>
+                  <input type="number" class="form-input" id="visit-capacity" placeholder="مثال: 10000" min="0" oninput="calculateMortalityPercent()">
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-group">
+                  <label for="visit-age">العمر الحالي للقطيع (بالأيام) *</label>
+                  <input type="text" class="form-input" id="visit-age" placeholder="مثال: 32 يوم" required>
+                </div>
+                <div class="form-group">
+                  <label for="visit-temperature">درجة الحرارة المسجلة بالعنبر (م°)</label>
+                  <input type="number" class="form-input" id="visit-temperature" placeholder="درجة الحرارة..." step="0.1">
+                </div>
+              </div>
+
+              <!-- تتبع النافق في 3 أيام -->
+              <div style="border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 12px; margin-top: 8px;">
+                <span style="font-size: 13px; color: var(--text-muted); font-weight: bold;">💀 مؤشر النافق والوفيات الميدانية</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px;">
+                  <div class="form-group">
+                    <label for="mortality-today" style="font-size: 11px;">النافق اليوم</label>
+                    <input type="number" class="form-input" id="mortality-today" value="0" min="0" oninput="calculateMortalityPercent()">
+                  </div>
+                  <div class="form-group">
+                    <label for="mortality-yesterday" style="font-size: 11px;">نافق أمس</label>
+                    <input type="number" class="form-input" id="mortality-yesterday" value="0" min="0" oninput="calculateMortalityPercent()">
+                  </div>
+                  <div class="form-group">
+                    <label for="mortality-day-before" style="font-size: 11px;">نافق أول أمس</label>
+                    <input type="number" class="form-input" id="mortality-day-before" value="0" min="0" oninput="calculateMortalityPercent()">
+                  </div>
+                </div>
+                <div class="mortality-trend-display" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                  <span id="mortality-percent-badge" class="mortality-badge">-</span>
+                  <span id="mortality-trend-text" style="font-size: 12px; color: var(--text-muted);">أدخل الأعداد للتحليل</span>
+                </div>
+              </div>
+              
+              <!-- بند تحصينات المعمل المخصصة للمشخص -->
+              <div class="form-group" style="margin-top: 15px;">
+                <label for="visit-vaccinations">تحصينات المعمل التي تم إعطاؤها للقطيع</label>
+                <input type="text" class="form-input" id="visit-vaccinations" placeholder="مثال: هيتشنر عمر 7، جمبورو عمر 12...">
+              </div>
+            </div>
+
+            <!-- الكارت 3: الأعراض والتشخيص والروشتة الذكية -->
+            <div class="card-glass form-full-width">
+              <h3 class="card-title">🩺 التشخيص الطبي السريري والروشتة الذكية</h3>
+              
+              <div class="form-group">
+                <label for="visit-symptoms">الأعراض الظاهرية والتشريحية المسجلة بالفحص</label>
+                <textarea class="form-textarea" id="visit-symptoms" placeholder="اكتب بالتفصيل أعراض الطيور (خمول، تجمع، إفرازات رغامية، تضخم الكلى، التهاب أمعاء مدمم...)" rows="2"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="visit-past-meds">الأدوية والعلاجات المستخدمة خلال آخر 5 أيام</label>
+                <input type="text" class="form-input" id="visit-past-meds" placeholder="مثال: أوكسي تتراسيكلين، تايلوزين، أمبسلين...">
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                  <label for="visit-diff-diagnosis">التشخيص المقارن / المبدئي (Differential Diagnosis)</label>
+                  <input type="text" class="form-input" id="visit-diff-diagnosis" placeholder="التشخيصات المحتملة المشابهة للأعراض...">
+                </div>
+                <div class="form-group">
+                  <label for="visit-final-diagnosis">التشخيص النهائي المعتمد للدكتورة *</label>
+                  <input type="text" class="form-input" id="visit-final-diagnosis" placeholder="التشخيص المؤكد النهائي لحالة القطيع..." required>
+                </div>
+              </div>
+
+              <!-- محدد القوالب السريعة للروشتات الشائعة للسرعة الفائقة -->
+              <div class="quick-templates-section" style="border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 15px; margin-top: 15px; margin-bottom: 15px;">
+                <span style="font-size: 13px; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 8px;">💊 روشتات سريعة للأمراض الشائعة بالمعمل</span>
+                <div class="quick-presets-bar">
+                  <button type="button" class="preset-btn" onclick="applyPrescriptionTemplate('newcastle')">علاج نيوكاسل (NDV)</button>
+                  <button type="button" class="preset-btn" onclick="applyPrescriptionTemplate('coccidiosis')">علاج كوكسيديا</button>
+                </div>
+              </div>
+
+              <!-- منشئ الروشتة المدمج -->
+              <div class="form-group">
+                <label>📋 تفاصيل العلاج والروشتة الموجهة لمكتب العميل</label>
+                <table class="rx-builder-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 35%;">اسم الدواء التجاري</th>
+                      <th style="width: 25%;">المادة الفعالة والتركيز</th>
+                      <th style="width: 30%;">الجرعة والمدة وطريقة الاستخدام</th>
+                      <th style="width: 10%;">حذف</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rx-builder-rows">
+                    <!-- تعبأ ديناميكياً -->
+                  </tbody>
+                </table>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                  <button type="button" class="btn-secondary-outline" onclick="addRxBuilderRow()">➕ إضافة دواء للروشتة</button>
+                  <input type="text" id="active-ingredient-search" class="form-input" placeholder="🔍 ابحث عن بديل بالمادة الفعالة..." style="max-width: 250px; height: 36px; font-size:12px;" oninput="searchAlternativeMedicine(this.value)">
+                </div>
+                <div id="alternative-meds-suggestions" class="alternative-meds-container"></div>
+              </div>
+
+              <!-- الحسابات والمالية الخاصة بالكشف الحالي -->
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px; margin-top: 15px;">
+                <div class="form-group">
+                  <label for="visit-cost">تكلفة الكشف الحالية (ج.م) *</label>
+                  <input type="number" class="form-input" id="visit-cost" value="0" min="0" oninput="calculateVisitFinancials()" required>
+                </div>
+                <div class="form-group">
+                  <label for="visit-paid">المبلغ المسدد نقداً (ج.م) *</label>
+                  <input type="number" class="form-input" id="visit-paid" value="0" min="0" oninput="calculateVisitFinancials()" required>
+                </div>
+                <div class="form-group">
+                  <label for="visit-debt-amount">المتبقي الآجل للديون (ج.م)</label>
+                  <input type="number" class="form-input" id="visit-debt-amount" value="0" readonly style="background: rgba(244, 63, 94, 0.05); color: var(--color-danger); font-weight: bold; border-color: rgba(244,63,94,0.2);">
+                </div>
+              </div>
+            </div>
+
+            <!-- الكارت 4: الفحوصات المعملية -->
+            <div class="card-glass form-full-width">
+              <h3 class="card-title">🔬 الفحوصات الطبية والمعملية المرفقة</h3>
+              
+              <div class="lab-tests-grid">
+                <div class="lab-test-item">
+                  <input type="checkbox" id="lab-pcr">
+                  <div class="lab-test-details">
+                    <span>تحليل الـ PCR للفيروسات</span>
+                    <input type="text" id="lab-pcr-details" placeholder="نتائج PCR للعينات...">
+                  </div>
+                </div>
+                
+                <div class="lab-test-item">
+                  <input type="checkbox" id="lab-elisa">
+                  <div class="lab-test-details">
+                    <span>اختبار ELISA للأجسام المضادة</span>
+                    <input type="text" id="lab-elisa-details" placeholder="مستويات إليزا وعيار المعايرة...">
+                  </div>
+                </div>
+
+                <div class="lab-test-item">
+                  <input type="checkbox" id="lab-sensitivity">
+                  <div class="lab-test-details">
+                    <span>اختبار حساسية المضادات (Sensitivity)</span>
+                    <input type="text" id="lab-sensitivity-details" placeholder="المضادات الحيوية الأكثر تأثيراً...">
+                  </div>
+                </div>
+
+                <div class="lab-test-item">
+                  <input type="checkbox" id="lab-immunity">
+                  <div class="lab-test-details">
+                    <span>قياس الأجسام المضادة والمناعات</span>
+                    <input type="text" id="lab-immunity-details" placeholder="تفاصيل مستويات الأجسام المضادة...">
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 20px;">
+                <label for="visit-general-notes">ملاحظات الأمن البيولوجي والتوصيات العامة للدكتورة</label>
+                <textarea class="form-textarea" id="visit-general-notes" placeholder="اكتب توصيات الرش، التطهير، وتوقيت التحصين المقبل للقطيع..."></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- زر الإجراءات وحفظ الاستمارة -->
+          <div class="form-actions-bar">
+            <button type="button" class="btn-danger" style="padding: 12px 24px;" onclick="resetVisitForm()">🧹 تصفير الاستمارة</button>
+            <input type="hidden" id="visit-last-sample-date"> <!-- تاريخ عينة اليوم تلقائي -->
+            <button type="submit" class="btn-primary">💾 حفظ التشخيص وطباعة الروشتة</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- 5. تبويب مكاتب الأدوية والمخزون (Pharmacy) -->
+      <section class="tab-content" id="tab-pharmacy-content">
+        <div class="card-glass">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 20px;">
+            <h3 class="card-title" style="border:none; margin:0; padding:0;">🏢 مكاتب الأدوية المتوفرة ومخزوناتها</h3>
+            <button class="btn-primary" onclick="openAddPharmacyModal()">🏢 إضافة مكتب أدوية جديد</button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="med-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>اسم المكتب</th>
+                  <th>المسؤول</th>
+                  <th>رقم الهاتف</th>
+                  <th>العنوان</th>
+                  <th>عدد الأدوية المتوفرة</th>
+                  <th>إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="pharmacies-table-rows">
+                <!-- تعبأ ديناميكياً -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- قسم عرض مخزون مكتب أدوية محدد وتعديله -->
+        <div class="card-glass" id="pharmacy-inventory-details-card" style="margin-top: 24px; display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 15px;">
+            <h3 id="inventory-pharmacy-title" style="margin: 0; font-size: 15px; color: var(--accent-cyan);">💊 قائمة مخزون الأدوية المتوفرة لدى: </h3>
+            <button class="btn-primary" id="btn-add-drug-to-pharmacy" onclick="openAddDrugToPharmacyModal()">➕ إضافة دواء جديد للمخزون</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table class="med-table" style="font-size: 12px;">
+              <thead>
+                <tr>
+                  <th>اسم الدواء التجاري</th>
+                  <th>المادة الفعالة الأساسية</th>
+                  <th>التركيز</th>
+                  <th>الاستخدام الطبي</th>
+                  <th>حذف</th>
+                </tr>
+              </thead>
+              <tbody id="pharmacy-inventory-rows">
+                <!-- قائمة الأدوية للمكتب المختار -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. تبويب التحصينات (Vaccinations) -->
+      <section class="tab-content" id="tab-vaccinations-content">
+        <div class="card-glass">
+          <h3 class="card-title">💉 جدول تحصينات العنابر والمزارع</h3>
+          <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">
+            قم باختيار العميل وتحديد العنبر لمراجعة تحصيناته المعملية وجدولة تحصينات جديدة.
+          </p>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 600px; margin-bottom: 20px;">
+            <div class="form-group">
+              <label for="vac-breeder-select">اختر العميل (المربي)</label>
+              <select class="form-select" id="vac-breeder-select" onchange="handleVacBreederChange(this.value)">
+                <option value="">-- اختر المربي --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="vac-farm-select">اختر العنبر المعني بالتحصين</label>
+              <select class="form-select" id="vac-farm-select" onchange="loadFarmVaccinations(this.value)">
+                <option value="">-- يرجى اختيار المربي أولاً --</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="farm-vaccinations-display" style="display: none; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h4 style="margin: 0; color: var(--accent-cyan);" id="vac-farm-title">سجل تحصينات العنبر:</h4>
+              <button class="btn-primary" onclick="openAddVaccinationModal()" style="font-size: 12px; padding: 6px 12px;">➕ إضافة تحصينة جديدة</button>
+            </div>
+            
+            <div style="overflow-x: auto;">
+              <table class="med-table" style="font-size: 12px;">
+                <thead>
+                  <tr>
+                    <th>اسم التحصين</th>
+                    <th>العمر المستهدف</th>
+                    <th>تاريخ التحصين</th>
+                    <th>حالة التحصين</th>
+                    <th>إجراء</th>
+                  </tr>
+                </thead>
+                <tbody id="farm-vaccination-rows">
+                  <!-- تحصينات العنبر المختار -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. تبويب الحسابات والتحصيلات (Accounts) -->
+      <section class="tab-content" id="tab-accounts-content">
+        <!-- كروت التموضع المالي الشامل للعيادة -->
+        <div class="stats-grid">
+          <div class="stat-card" style="border-right: 4px solid var(--color-success);">
+            <span class="stat-label">💸 إجمالي الإيرادات النقدية المحصلة</span>
+            <span class="stat-val" id="accounts-total-paid">0 ج.م</span>
+          </div>
+          <div class="stat-card" style="border-right: 4px solid var(--color-danger);">
+            <span class="stat-label">🚨 إجمالي الديون المعلقة بالخارج</span>
+            <span class="stat-val" id="accounts-total-debts">0 ج.م</span>
+          </div>
+          <div class="stat-card" style="border-right: 4px solid var(--accent-blue);">
+            <span class="stat-label">📊 إجمالي مبيعات الاستشارات والكشوفات</span>
+            <span class="stat-val" id="accounts-total-sales">0</span>
+          </div>
+        </div>
+
+        <div class="card-glass" style="margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-bottom: 20px;">
+            <h3 class="card-title" style="border: none; margin-bottom:0; padding-bottom:0;">💰 دفتر القيود والتحصيلات الاستشارية</h3>
+            
+            <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+              <label for="accounts-date-picker" style="font-size:13px; color:var(--text-muted);">تاريخ المراجعة:</label>
+              <input type="date" class="form-input" id="accounts-date-picker" onchange="renderFinancialAccounts(this.value)" style="height: 38px; padding: 4px 10px; width: 160px;">
+              <button class="btn-secondary-outline" style="padding: 6px 12px;" onclick="printDailyFinancialReport()">🖨️ طباعة تقرير اليوم المالي</button>
+            </div>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="med-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>اسم العميل (المربي)</th>
+                  <th>العنبر المعني</th>
+                  <th>التاريخ</th>
+                  <th>إجمالي تكلفة الكشف</th>
+                  <th>المدفوع نقداً</th>
+                  <th>الآجل المتبقي</th>
+                  <th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody id="accounts-ledger-rows">
+                <!-- الحسابات اليومية -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. تبويب النسخ الاحتياطي والربط السحابي (Backup) -->
+      <section class="tab-content" id="tab-backup-content">
+        <div class="settings-layout">
+          <!-- كارت ربط جوجل شيت -->
+          <div class="card-glass">
+            <h3 class="card-title">🔗 إعدادات الربط السحابي مع Google Sheets</h3>
+            <div class="instruction-box">
+              <strong>تجهيز المزامنة السحابية للعيادة والمكاتب:</strong>
+              <ol>
+                <li>قم بإنشاء جدول بيانات (Google Sheet) فارغ على حساب جوجل الخاص بك.</li>
+                <li>افتح قائمة (Extensions / الإضافات) ثم اختر <strong>Apps Script</strong>.</li>
+                <li>قم بنسخ محتوى الكود المحدث بالكامل في ملف <a href="file:///C:/Users/DELL%204600/.gemini/antigravity/scratch/poultry_vet_clinic/GoogleAppsScript.js" target="_blank" style="color: var(--accent-blue-hover); font-weight: bold; text-decoration: underline;">GoogleAppsScript.js</a> ولصقه في محرر الأكواد، ثم حفظ ونشر <strong>Deploy -> New deployment كـ Web app</strong> وإتاحة الوصول للجميع (Anyone).</li>
+                <li>انسخ رابط الويب المتولد وضعه في الحقل أدناه لتفعيل المزامنة.</li>
+              </ol>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+              <label for="setting-apps-script-url">رابط Apps Script Web App API الخاص بك</label>
+              <input type="url" class="form-input" id="setting-apps-script-url" placeholder="https://script.google.com/macros/s/.../exec" style="direction: ltr; text-align: left;">
+            </div>
+
+            <div class="form-group">
+              <label for="setting-sync-mode">وضع مزامنة البيانات السحابية</label>
+              <select class="form-select" id="setting-sync-mode" onchange="toggleSyncModeUI(this.value)">
+                <option value="local">تخزين محلي فقط (سرعة فائقة دون إنترنت)</option>
+                <option value="cloud">مزامنة سحابية نشطة (مزامنة فورية مع Google Sheets)</option>
+              </select>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap;">
+              <button class="btn-primary" onclick="saveSettings()">💾 حفظ الإعدادات واختبار الاتصال</button>
+              <button class="btn-secondary-outline" onclick="testSheetConnection()">🌐 اختبار اتصال جوجل شيت</button>
+            </div>
+          </div>
+
+          <!-- كارت النسخ الاحتياطي المحلي -->
+          <div class="card-glass">
+            <h3 class="card-title">📦 نسخ احتياطي وتفريغ البيانات محلياً</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;">
+              يمكنك تصدير قاعدة البيانات المحلية بالكامل كملف JSON لحفظها، أو استيرادها لاسترجاع البيانات في ثوانٍ، أو مسح قاعدة البيانات للبدء من جديد.
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+              <button class="btn-secondary-outline" onclick="exportBackupData()">📤 تصدير نسخة احتياطية (Backup JSON)</button>
+              
+              <label for="import-backup-file" class="btn-secondary-outline" style="cursor: pointer; display: inline-flex;">
+                📥 استيراد نسخة احتياطية
+              </label>
+              <input type="file" id="import-backup-file" accept=".json" style="display: none;" onchange="importBackupData(event)">
+              
+              <button class="btn-danger" style="border-radius: var(--radius-sm); font-size: 13px;" onclick="clearLocalStorageDB()">
+                🗑️ مسح الذاكرة المحلية وتصفير التطبيق
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ======================================================= -->
+  <!-- النوافذ المنبثقة التفاعلية (Modals) -->
+  <!-- ======================================================= -->
+
+  <!-- مودال 1: إضافة مربي جديد -->
+  <div class="modal-overlay" id="add-breeder-modal">
+    <div class="modal-content">
+      <div class="modal-header">👥 تسجيل عميل (مربي دواجن) جديد</div>
+      
+      <div class="form-group">
+        <label for="modal-breeder-name">اسم العميل *</label>
+        <input type="text" class="form-input" id="modal-breeder-name-input" placeholder="اسم المربي بالكامل..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-breeder-phone">رقم الهاتف / الموبايل *</label>
+        <input type="tel" class="form-input" id="modal-breeder-phone-input" placeholder="رقم الموبايل..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-breeder-address">العنوان الجغرافي للمزرعة *</label>
+        <input type="text" class="form-input" id="modal-breeder-address-input" placeholder="القرية - المركز - المحافظة..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-breeder-pharmacy">مكتب الأدوية المفضل للمربي</label>
+        <select class="form-select" id="modal-breeder-pharmacy-select">
+          <option value="">-- لا يوجد صيدلية مفضلة --</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" onclick="closeAddBreederModal()">إلغاء</button>
+        <button class="btn-primary" onclick="handleAddBreederSubmit()">💾 حفظ العميل الجديد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال 2: إضافة عنبر/مزرعة -->
+  <div class="modal-overlay" id="add-farm-modal">
+    <div class="modal-content">
+      <div class="modal-header">🚜 تسجيل عنبر/مستودع جديد</div>
+      
+      <div class="form-group">
+        <label for="modal-farm-breeder">اختر العميل (المالك) *</label>
+        <select class="form-select" id="modal-farm-breeder-select" required>
+          <option value="">-- اختر المالك --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-farm-name">اسم العنبر / الرقم المعرف *</label>
+        <input type="text" class="form-input" id="modal-farm-name-input" placeholder="مثال: عنبر 1 تسمين، عنبر 2 غربي..." required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label for="modal-farm-type">نوع الطيور</label>
+          <select class="form-select" id="modal-farm-type-select">
+            <option value="تسمين">تسمين (أبيض)</option>
+            <option value="بياض">بياض</option>
+            <option value="أمهات">أمهات</option>
+            <option value="بلدي">بلدي محسن/هجين</option>
+            <option value="بط">بط</option>
+            <option value="حمام">حمام/أخرى</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="modal-farm-breed">السلالة</label>
+          <input type="text" class="form-input" id="modal-farm-breed-input" placeholder="روس، كوب، لوهمان...">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label for="modal-farm-hatchery">المصدر (المفرخ)</label>
+          <input type="text" class="form-input" id="modal-farm-hatchery-input" placeholder="الوادى، القاهرة...">
+        </div>
+        <div class="form-group">
+          <label for="modal-farm-capacity">سعة العنبر (عدد الطيور) *</label>
+          <input type="number" class="form-input" id="modal-farm-capacity-input" placeholder="مثال: 5000" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-farm-status">الحالة التشغيلية الحالية</label>
+        <select class="form-select" id="modal-farm-status-select">
+          <option value="نشط">نشط (مسكن به طيور)</option>
+          <option value="فارغ">فارغ (مباع)</option>
+          <option value="تحت التطهير">تحت التطهير والتعقيم</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" onclick="closeAddFarmModal()">إلغاء</button>
+        <button class="btn-primary" onclick="handleAddFarmSubmit()">💾 حفظ العنبر</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال 3: إضافة مكتب أدوية بيطرية -->
+  <div class="modal-overlay" id="add-pharmacy-modal">
+    <div class="modal-content">
+      <div class="modal-header">🏢 تسجيل مكتب أدوية بيطرية جديد</div>
+      
+      <div class="form-group">
+        <label for="modal-ph-name">اسم المكتب البيطري *</label>
+        <input type="text" class="form-input" id="modal-ph-name-input" placeholder="اسم مكتب الأدوية..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-ph-manager">الدكتور المسؤول *</label>
+        <input type="text" class="form-input" id="modal-ph-manager-input" placeholder="اسم الدكتور المسؤول..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-ph-phone">رقم هاتف المكتب للتواصل *</label>
+        <input type="tel" class="form-input" id="modal-ph-phone-input" placeholder="رقم الهاتف للتواصل المباشر..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-ph-address">عنوان المكتب الجغرافي *</label>
+        <input type="text" class="form-input" id="modal-ph-address-input" placeholder="المدينة - الشارع - المعلم..." required>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" onclick="closeAddPharmacyModal()">إلغاء</button>
+        <button class="btn-primary" onclick="handleAddPharmacySubmit()">💾 حفظ المكتب</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال 4: إضافة دواء/مادة لمخزون صيدلية محددة -->
+  <div class="modal-overlay" id="add-drug-modal">
+    <div class="modal-content">
+      <div class="modal-header" id="modal-drug-header">💊 إضافة علاج لمخزون مكتب الأدوية</div>
+      
+      <div class="form-group">
+        <label for="modal-dr-trade">اسم الدواء التجاري *</label>
+        <input type="text" class="form-input" id="modal-dr-trade-input" placeholder="مثال: بان فلور، أمبروليوم 20%..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-dr-active">المادة الفعالة الأساسية (Active Ingredient) *</label>
+        <input type="text" class="form-input" id="modal-dr-active-input" placeholder="مثال: فلورفينيكول، أمبروليوم..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-dr-concentration">تركيز المادة الفعالة *</label>
+        <input type="text" class="form-input" id="modal-dr-concentration-input" placeholder="مثال: 10%، 20%، 100%..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-dr-use">استخدام الدواء ودواعي الاستعمال المعتمدة بالمعمل</label>
+        <input type="text" class="form-input" id="modal-dr-use-input" placeholder="مثال: مضاد حيوي معوي وتنفسي...">
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" onclick="closeAddDrugToPharmacyModal()">إلغاء</button>
+        <button class="btn-primary" onclick="handleAddDrugToPharmacySubmit()">💾 حفظ الدواء بالمخزون</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال 5: إضافة تحصينة لعنبر محدد -->
+  <div class="modal-overlay" id="add-vaccination-modal">
+    <div class="modal-content">
+      <div class="modal-header">💉 إضافة تحصينة للعنبر</div>
+      
+      <div class="form-group">
+        <label for="modal-vac-name">اسم التحصين (الجرعة) *</label>
+        <input type="text" class="form-input" id="modal-vac-name-input" placeholder="مثال: جمبورو، نيوكاسل زيتي، إنفلونزا..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-vac-age">العمر المستهدف (بالأيام) *</label>
+        <input type="text" class="form-input" id="modal-vac-age-input" placeholder="مثال: عمر 7 أيام، عمر 12 يوم..." required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-vac-date">تاريخ التحصين المقرر *</label>
+        <input type="date" class="form-input" id="modal-vac-date-input" required>
+      </div>
+
+      <div class="form-group">
+        <label for="modal-vac-status">حالة التحصين</label>
+        <select class="form-select" id="modal-vac-status-select">
+          <option value="تمت">تمت (أعطيت للقطيع)</option>
+          <option value="معلقة">معلقة (مخططة مستقبلاً)</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" onclick="closeAddVaccinationModal()">إلغاء</button>
+        <button class="btn-primary" onclick="handleAddVaccinationSubmit()">💾 حفظ التحصين</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال 6: تسوية مديونية عميل بيطري -->
+  <div class="modal-overlay" id="settle-debt-modal">
+    <div class="modal-content">
+      <div class="modal-header">💵 تسوية مديونية العميل المالي</div>
+      
+      <div class="form-group">
+        <label>اسم المربي الحالي</label>
+        <input type="text" class="form-input" id="modal-breeder-name" readonly style="background: rgba(255,255,255,0.02); color: var(--text-muted);">
+      </div>
+
+      <div class="form-group">
+        <label>إجمالي المديونية التراكمية القائمة (ج.م)</label>
+        <input type="text" class="form-input" id="modal-current-debt" readonly style="background: rgba(255,255,255,0.02); color: var(--color-danger); font-weight: bold;">
+      </div>
+
+      <div class="form-group">
+        <label for="modal-payment-amount">القيمة المدفوعة والمسددة الآن (ج.م) *</label>
+        <input type="number" class="form-input" id="modal-payment-amount" placeholder="أدخل المبلغ المسدد..." min="0" required>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-danger" onclick="closeSettleDebtModal()">إلغاء</button>
+        <button class="btn-primary" onclick="handleSettleDebtSubmit()">💵 تأكيد سداد الديون</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- حاوية التنبيهات الطائرة (Toasts) -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ======================================================= -->
+  <!-- قوالب الطباعة (تظهر في الطباعة فقط) -->
+  <!-- ======================================================= -->
+  <div id="print-template-container">
+    
+    <!-- قالب 1: الروشتة الموجهة لمكتب الأدوية المفضل للمربي -->
+    <div class="print-page" id="print-rx-template">
+      <!-- يتم حقنه تلقائياً من app.js -->
+    </div>
+
+    <!-- قالب 2: تقرير الهيستوري والزيارات الموحد -->
+    <div class="print-page" id="print-history-template">
+      <!-- يتم حقنه تلقائياً من app.js -->
+    </div>
+
+  </div>
+
+  <!-- تحميل الكتالوجات والسكريبت المكتبي المدمج -->
+  <script src="mockData.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
