@@ -3,6 +3,7 @@
 // متغيرات الحالة العامة للتطبيق
 let breedersData = [];
 let pharmaciesData = [];
+let medicinesData = [];          // دليل وأسماء الأدوية المسجلة
 let selectedBreeder = null;      // العميل المختار في شاشة التاريخ المرضي
 let selectedPharmacy = null;     // صيدلية مكتب الأدوية المختار لمشاهدة مخزونه
 let activeFarmForVac = null;     // العنبر المختار حالياً لإضافة التحصينات له
@@ -34,15 +35,18 @@ document.addEventListener("DOMContentLoaded", () => {
     
     document.addEventListener("click", (e) => {
       if (!e.target.closest(".search-wrapper")) {
-        document.getElementById("search-suggestions-dropdown").style.display = "none";
+        const dd = document.getElementById("search-suggestions-dropdown");
+        if (dd) dd.style.display = "none";
       }
     });
   }
 
-  // 4. رندرة الإحصائيات الافتراضية
+  // 4. رندرة الإحصائيات والجداول الافتراضية
   renderDashboard();
   renderFarmsTable();
   renderPharmaciesTable();
+  renderMedicinesTable();
+  updateMedsDatalist();
   populateDropdowns();
 
   // 5. تهيئة صفوف الروشتة الافتراضية
@@ -61,6 +65,7 @@ function initDatabase() {
   try {
     const localData = localStorage.getItem("poultry_breeders_db_v2");
     const localPharmacies = localStorage.getItem("poultry_pharmacies_db_v2");
+    const localMedicines = localStorage.getItem("poultry_medicines_db_v2");
 
     if (localData) {
       breedersData = JSON.parse(localData);
@@ -76,6 +81,13 @@ function initDatabase() {
       localStorage.setItem("poultry_pharmacies_db_v2", JSON.stringify(pharmaciesData));
     }
 
+    if (localMedicines) {
+      medicinesData = JSON.parse(localMedicines);
+    } else {
+      medicinesData = window.MOCK_MEDICINES || [];
+      localStorage.setItem("poultry_medicines_db_v2", JSON.stringify(medicinesData));
+    }
+
     // هجرة وهيكلة البيانات لضمان عدم حدوث كراش للمربين القدامى
     breedersData.forEach(b => {
       if (!b.farms) b.farms = [];
@@ -87,6 +99,7 @@ function initDatabase() {
     console.error("خطأ في قراءة قاعدة البيانات، جاري تصفير البيانات الافتراضية:", e);
     breedersData = window.MOCK_DATA || [];
     pharmaciesData = window.MOCK_PHARMACIES || [];
+    medicinesData = window.MOCK_MEDICINES || [];
     saveDataToLocal();
   }
 }
@@ -94,15 +107,17 @@ function initDatabase() {
 function saveDataToLocal() {
   localStorage.setItem("poultry_breeders_db_v2", JSON.stringify(breedersData));
   localStorage.setItem("poultry_pharmacies_db_v2", JSON.stringify(pharmaciesData));
+  localStorage.setItem("poultry_medicines_db_v2", JSON.stringify(medicinesData));
   
   // إعادة رندرة الشاشات المفتوحة
   renderDashboard();
   renderFarmsTable();
   renderPharmaciesTable();
+  renderMedicinesTable();
+  updateMedsDatalist();
   populateDropdowns();
   
   if (selectedBreeder) {
-    // تحديث تفاصيل المربي إذا كان معروضاً حالياً
     selectBreederFromSearch(selectedBreeder.id);
   }
 }
@@ -142,6 +157,8 @@ function saveSettings() {
 function toggleSyncModeUI(mode) {
   const badge = document.getElementById("sync-status-badge");
   const text = document.getElementById("sync-status-text");
+  if (!badge || !text) return;
+  
   if (mode === "cloud") {
     badge.className = "sync-badge";
     text.textContent = "المزامنة السحابية نشطة (Google Sheets)";
@@ -153,31 +170,31 @@ function toggleSyncModeUI(mode) {
 
 // تبديل الأقسام والتبويبات
 function switchTab(tabName) {
-  // إزالة الكلاسات النشطة
   document.querySelectorAll(".nav-item").forEach(item => item.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(tab => tab.classList.remove("active"));
 
-  // تفعيل التبويب المطلوب
   const navItem = document.getElementById(`nav-${tabName}`);
   const tabContent = document.getElementById(`tab-${tabName}-content`);
   
   if (navItem) navItem.classList.add("active");
   if (tabContent) tabContent.classList.add("active");
 
-  // مهام خاصة عند فتح شاشات معينة
   if (tabName === "dashboard") {
     renderDashboard();
   } else if (tabName === "farms") {
     renderFarmsTable();
+  } else if (tabName === "medicines") {
+    renderMedicinesTable();
   } else if (tabName === "pharmacy") {
     renderPharmaciesTable();
   } else if (tabName === "accounts") {
     const todayStr = new Date().toISOString().split('T')[0];
-    document.getElementById("accounts-date-picker").value = todayStr;
+    const picker = document.getElementById("accounts-date-picker");
+    if (picker) picker.value = todayStr;
     renderFinancialAccounts(todayStr);
   }
 
-  // إغلاق المينيو الجانبي على الموبايل تلقائياً بعد الاختيار
+  // إغلاق المينيو الجانبي على الموبايل تلقائياً
   const sidebar = document.getElementById("sidebar-drawer");
   if (sidebar && sidebar.classList.contains("active")) {
     sidebar.classList.remove("active");
@@ -195,11 +212,10 @@ function toggleSidebar() {
 // منطق شاشة لوحة التحكم العامة (Dashboard Module)
 // ====================================================
 function renderDashboard() {
-  // حساب الإحصائيات الإجمالية
   let totalBreeders = breedersData.length;
   let totalFarms = 0;
   let totalVisits = 0;
-  let totalPharmacies = pharmaciesData.length;
+  let totalMedicines = medicinesData.length;
 
   breedersData.forEach(b => {
     totalFarms += (b.farms || []).length;
@@ -209,19 +225,17 @@ function renderDashboard() {
   const breedersEl = document.getElementById("stat-total-breeders");
   const farmsEl = document.getElementById("stat-total-farms");
   const visitsEl = document.getElementById("stat-total-visits");
-  const pharEl = document.getElementById("stat-total-pharmacies");
+  const medsEl = document.getElementById("stat-total-medicines");
 
   if (breedersEl) breedersEl.textContent = totalBreeders;
   if (farmsEl) farmsEl.textContent = totalFarms;
   if (visitsEl) visitsEl.textContent = totalVisits;
-  if (pharEl) pharEl.textContent = totalPharmacies;
+  if (medsEl) medsEl.textContent = totalMedicines;
 
-  // جلب آخر كشوفات بالمعمل لعرضها
   const recentVisitsRows = document.getElementById("dashboard-recent-visits-rows");
   if (recentVisitsRows) {
     recentVisitsRows.innerHTML = "";
     
-    // جمع كل زيارات المربين في قائمة واحدة
     let allVisits = [];
     breedersData.forEach(b => {
       (b.visits || []).forEach(v => {
@@ -229,7 +243,7 @@ function renderDashboard() {
         allVisits.push({
           breederName: b.name,
           breederId: b.id,
-          farmName: farmObj.name || "عنبر غير محدد",
+          farmName: farmObj.name || "عنبر عام",
           age: v.age,
           date: v.date,
           finalDiagnosis: v.finalDiagnosis,
@@ -238,7 +252,6 @@ function renderDashboard() {
       });
     });
 
-    // ترتيب الزيارات تنازلياً حسب التاريخ
     allVisits.sort((a,b) => new Date(b.date) - new Date(a.date));
 
     if (allVisits.length === 0) {
@@ -274,7 +287,7 @@ function normalizeArabic(text) {
     .replace(/ى/g, "ي")
     .replace(/ئ/g, "ي")
     .replace(/ؤ/g, "و")
-    .replace(/[\u064B-\u065F]/g, "") // إزالة التشكيل
+    .replace(/[\u064B-\u065F]/g, "")
     .trim()
     .toLowerCase();
 }
@@ -301,20 +314,20 @@ function handleMainSearch(query) {
     }
   });
 
-  // 2. البحث في مكاتب الأدوية
-  pharmaciesData.forEach(p => {
-    if (normalizeArabic(p.name).includes(normQuery) || normalizeArabic(p.manager).includes(normQuery) || normalizeArabic(p.address).includes(normQuery)) {
+  // 2. البحث في الأدوية
+  medicinesData.forEach(m => {
+    if (normalizeArabic(m.name).includes(normQuery) || normalizeArabic(m.notes || "").includes(normQuery)) {
       matches.push({
-        type: "pharmacy",
-        id: p.id,
-        title: p.name,
-        subtitle: `🏢 مكتب أدوية بيطرية - د. ${p.manager} - ${p.address}`
+        type: "medicine",
+        id: m.id,
+        title: m.name,
+        subtitle: `💊 دواء مسجل بالدليل - ${m.notes || ''}`
       });
     }
   });
 
   if (matches.length === 0) {
-    dropdown.innerHTML = `<div style="padding:15px; color:var(--text-muted); text-align:center; font-size:12px;">لا يوجد عملاء أو مكاتب مطابقة للبحث</div>`;
+    dropdown.innerHTML = `<div style="padding:15px; color:var(--text-muted); text-align:center; font-size:12px;">لا يوجد نتائج مطابقة للبحث</div>`;
     dropdown.style.display = "block";
     return;
   }
@@ -335,14 +348,107 @@ function handleMainSearch(query) {
       
       if (m.type === "client") {
         selectBreederFromSearch(m.id);
-      } else {
-        switchTab("pharmacy");
-        selectPharmacyForInventory(m.id);
+      } else if (m.type === "medicine") {
+        switchTab("medicines");
+        renderMedicinesTable(m.title);
       }
     };
     dropdown.appendChild(item);
   });
   dropdown.style.display = "block";
+}
+
+// ====================================================
+// إدارة دليل وأسماء الأدوية (Medicines Directory)
+// ====================================================
+function renderMedicinesTable(searchQuery = "") {
+  const tbody = document.getElementById("medicines-table-rows");
+  if (!tbody) return;
+  tbody.innerHTML = "";
+
+  let list = medicinesData;
+  if (searchQuery && searchQuery.trim()) {
+    const norm = normalizeArabic(searchQuery);
+    list = list.filter(m => normalizeArabic(m.name).includes(norm) || normalizeArabic(m.notes || "").includes(norm));
+  }
+
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">لا يوجد أدوية مسجلة مطابقة</td></tr>`;
+    return;
+  }
+
+  list.forEach((m, index) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="text-align:center; color:var(--text-muted);">${index + 1}</td>
+      <td style="font-weight:bold; color:var(--accent-cyan); font-size:13px;">${m.name}</td>
+      <td>${m.notes || "-"}</td>
+      <td style="text-align:center;">
+        <button class="btn-danger" style="padding:4px 10px; font-size:11px; border-radius:4px;" onclick="deleteMedicine('${m.id}')">🗑️ حذف</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function updateMedsDatalist() {
+  let datalist = document.getElementById("meds-datalist");
+  if (!datalist) {
+    datalist = document.createElement("datalist");
+    datalist.id = "meds-datalist";
+    document.body.appendChild(datalist);
+  }
+
+  let html = "";
+  medicinesData.forEach(m => {
+    html += `<option value="${m.name}">`;
+  });
+  datalist.innerHTML = html;
+}
+
+function openAddMedicineModal() {
+  document.getElementById("modal-med-name-input").value = "";
+  document.getElementById("modal-med-notes-input").value = "";
+  document.getElementById("add-medicine-modal").classList.add("active");
+}
+
+function closeAddMedicineModal() {
+  document.getElementById("add-medicine-modal").classList.remove("active");
+}
+
+function handleAddMedicineSubmit() {
+  const name = document.getElementById("modal-med-name-input").value.trim();
+  const notes = document.getElementById("modal-med-notes-input").value.trim();
+
+  if (!name) {
+    showToast("يرجى كتابة اسم الدواء / العلاج!", "warning");
+    return;
+  }
+
+  const newMed = {
+    id: "med_" + Date.now(),
+    name: name,
+    notes: notes
+  };
+
+  medicinesData.unshift(newMed);
+  saveDataToLocal();
+  closeAddMedicineModal();
+  renderMedicinesTable();
+  updateMedsDatalist();
+  showToast(`تم تسجيل الدواء "${name}" بالدليل بنجاح`, "success");
+}
+
+function deleteMedicine(medId) {
+  const index = medicinesData.findIndex(m => m.id === medId);
+  if (index !== -1) {
+    const medName = medicinesData[index].name;
+    medicinesData.splice(index, 1);
+    saveDataToLocal();
+    renderMedicinesTable();
+    updateMedsDatalist();
+    showToast(`تم حذف الدواء "${medName}" من الدليل`, "warning");
+  }
 }
 
 // ====================================================
@@ -362,10 +468,6 @@ function selectBreederFromSearch(breederId) {
   document.getElementById("profile-name").textContent = breeder.name;
   document.getElementById("profile-phone").textContent = breeder.phone;
   document.getElementById("profile-address").textContent = breeder.address;
-  
-  // الصيدلية المفضلة
-  const phObj = pharmaciesData.find(p => p.id === breeder.preferredPharmacyId);
-  document.getElementById("profile-preferred-pharmacy").textContent = phObj ? phObj.name : "لم يتم تحديد صيدلية معتمدة";
 
   // رندرة العنابر التابعة للعميل في الكارت الجانبي
   const farmsListContainer = document.getElementById("profile-farms-list");
@@ -397,7 +499,7 @@ function selectBreederFromSearch(breederId) {
     notesEl.textContent = "الحساب المالي للعميل سليم وخالص";
   }
 
-  // رندرة سجل الأدوية والتنبيهات
+  // رندرة سجل الأدوية السابقة
   renderClientMedHistory(breeder);
 
   // تحديث محدد الدورات وتعبئته بالخيارات
@@ -428,7 +530,7 @@ function renderClientMedHistory(breeder) {
     (v.prescriptions || []).forEach(p => {
       medHistory.push({
         name: p.name,
-        activeIngredient: p.activeIngredient || "غير محددة",
+        dose: p.dose || "-",
         date: v.date,
         age: v.age
       });
@@ -436,49 +538,19 @@ function renderClientMedHistory(breeder) {
   });
 
   if (medHistory.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">لا يوجد سجل أدوية سابق للعميل</td></tr>`;
-    document.getElementById("active-withdrawal-warnings-card").style.display = "none";
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">لا يوجد سجل أدوية سابق للعميل</td></tr>`;
     return;
   }
 
-  // تحديد التحذيرات وفترات الأمان
-  const warningsList = document.getElementById("withdrawal-warnings-list");
-  warningsList.innerHTML = "";
-  let hasWarnings = false;
-
   medHistory.forEach(med => {
-    // حساب فترة الأمان بناءً على الكتالوج
-    const catalogItem = window.MEDICINE_CATALOG[med.name];
-    let badgeHtml = `<span class="badge success">آمن للاستهلاك (منتهي)</span>`;
-    
-    if (catalogItem && catalogItem.withdrawalDays > 0) {
-      const dateMed = new Date(med.date);
-      const dateNow = new Date();
-      const diffTime = dateNow - dateMed;
-      const daysPassed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-      if (daysPassed < catalogItem.withdrawalDays) {
-        hasWarnings = true;
-        const daysLeft = catalogItem.withdrawalDays - daysPassed;
-        badgeHtml = `<span class="badge danger">⚠️ غير آمن (متبقي ${daysLeft} يوم)</span>`;
-        
-        const li = document.createElement("li");
-        li.innerHTML = `دواء <strong>${med.name}</strong> الموصوف في كشف تاريخ ${med.date} (لا يزال تحت فترة سحب أمان بيولوجي مدتها ${catalogItem.withdrawalDays} يوماً، متبقي منها ${daysLeft} يوماً).`;
-        warningsList.appendChild(li);
-      }
-    }
-
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td style="font-weight:bold; color:var(--accent-cyan);">${med.name}</td>
+      <td style="font-weight:bold; color:var(--accent-cyan); font-size:13px;">${med.name}</td>
       <td>📅 ${med.date} (عمر: ${med.age})</td>
-      <td>${med.activeIngredient}</td>
-      <td>${badgeHtml}</td>
+      <td>${med.dose}</td>
     `;
     tbody.appendChild(tr);
   });
-
-  document.getElementById("active-withdrawal-warnings-card").style.display = hasWarnings ? "block" : "none";
 }
 
 function renderClientVisitsTimeline(breeder) {
@@ -504,8 +576,8 @@ function renderClientVisitsTimeline(breeder) {
       </div>
       <div class="timeline-body">
         <p>📋 الأعراض والتشريح: ${v.symptoms || "لم تدون أعراض تفصيلية"}</p>
-        <p style="margin-top:5px; color:var(--accent-cyan);">💊 الروشتة الموجهة: ${medsHtml || "لا يوجد أدوية موصوفة"}</p>
-        <p style="margin-top:5px; font-size:11px; color:var(--text-muted);">🔬 الفحوصات المعملية: PCR: ${v.labTests.pcr ? "إيجابي" : "لا يوجد"} | ELISA: ${v.labTests.elisa ? "نعم" : "لا يوجد"} | الحساسية: ${v.labTests.sensitivity ? "نعم" : "لا يوجد"}</p>
+        <p style="margin-top:5px; color:var(--accent-cyan);">💊 العلاجات والروشتة: ${medsHtml || "لا يوجد أدوية موصوفة"}</p>
+        <p style="margin-top:5px; font-size:11px; color:var(--text-muted);">🔬 الفحوصات المعملية: PCR: ${v.labTests && v.labTests.pcr ? "إيجابي" : "لا يوجد"} | ELISA: ${v.labTests && v.labTests.elisa ? "نعم" : "لا يوجد"} | الحساسية: ${v.labTests && v.labTests.sensitivity ? "نعم" : "لا يوجد"}</p>
         <div style="margin-top:8px;">
           <button class="btn-secondary-outline" style="padding:4px 8px; font-size:11px;" onclick="printSpecificVisitRx('${breeder.id}', '${v.id}')">🖨️ إعادة طباعة الروشتة</button>
         </div>
@@ -528,12 +600,11 @@ function renderCycleReport(cycleName) {
     return;
   }
 
-  // حساب الإحصائيات الشاملة للدورة المحددة للنافق والأدوية
   let totalMortality = 0;
   let uniqueDiagnoses = new Set();
   let uniqueMeds = new Set();
-  let startDate = visits[visits.length - 1].date; // الأقدم
-  let endDate = visits[0].date;                   // الأحدث
+  let startDate = visits[visits.length - 1].date;
+  let endDate = visits[0].date;
   let totalCapacity = 0;
 
   visits.forEach(v => {
@@ -541,7 +612,6 @@ function renderCycleReport(cycleName) {
     if (v.finalDiagnosis) uniqueDiagnoses.add(v.finalDiagnosis);
     (v.prescriptions || []).forEach(p => uniqueMeds.add(p.name));
     
-    // جلب سعة العنبر
     const farmObj = selectedBreeder.farms.find(f => f.id === v.farmId);
     if (farmObj && farmObj.capacity) {
       totalCapacity = Math.max(totalCapacity, farmObj.capacity);
@@ -603,7 +673,6 @@ function renderFarmsTable() {
   }
 }
 
-// تحميل التحصينات وعرضها
 function handleVacBreederChange(breederId) {
   const farmSelect = document.getElementById("vac-farm-select");
   farmSelect.innerHTML = '<option value="">-- اختر العنبر --</option>';
@@ -646,7 +715,7 @@ function loadFarmVaccinations(farmId) {
   const farm = breeder.farms.find(f => f.id === farmId);
   if (!farm) return;
 
-  activeFarmForVac = farm; // حفظ العنبر النشط لإضافة التحصين لاحقاً
+  activeFarmForVac = farm;
   tbody.innerHTML = "";
   
   document.getElementById("vac-farm-title").innerHTML = `💉 سجل تحصينات العنبر: <strong>${farm.name}</strong> (${farm.type} - سلالة: ${farm.breed || 'غير محددة'})`;
@@ -740,10 +809,9 @@ function renderPharmacyInventoryRows(ph) {
 }
 
 // ====================================================
-// استمارة الكشف والروشتة الذكية وتنبيهات المخزون
+// استمارة الكشف والروشتة الحرة والمرنة بالكامل
 // ====================================================
 
-// البحث عن مربي في استمارة الكشف وتعبئته تلقائياً
 function handleFormBreederSearch(query) {
   const dropdown = document.getElementById("form-breeder-results-dropdown");
   if (!query.trim()) {
@@ -755,7 +823,7 @@ function handleFormBreederSearch(query) {
   const matches = breedersData.filter(b => normalizeArabic(b.name).includes(normQuery) || normalizeArabic(b.phone).includes(normQuery));
 
   if (matches.length === 0) {
-    dropdown.innerHTML = `<div style="padding:10px; text-align:center; color:var(--text-muted); font-size:11px;">مربي جديد بالكامل (سيتم تسجيله تلقائياً)</div>`;
+    dropdown.innerHTML = `<div style="padding:10px; text-align:center; color:var(--text-muted); font-size:11px;">مربي جديد (سيتم حفظه تلقائياً)</div>`;
     dropdown.style.display = "block";
     return;
   }
@@ -773,7 +841,8 @@ function handleFormBreederSearch(query) {
 }
 
 function selectBreederForForm(breeder) {
-  document.getElementById("form-breeder-results-dropdown").style.display = "none";
+  const dd = document.getElementById("form-breeder-results-dropdown");
+  if (dd) dd.style.display = "none";
   
   document.getElementById("visit-breeder-name").value = breeder.name;
   document.getElementById("visit-breeder-name").dataset.breederId = breeder.id;
@@ -792,7 +861,6 @@ function selectBreederForForm(breeder) {
       opt.textContent = `${f.name} (${f.type} - سلالة: ${f.breed || 'عام'} - سعة: ${f.capacity.toLocaleString()})`;
       farmSelect.appendChild(opt);
     });
-    // اختيار العنبر الأول افتراضياً
     farmSelect.value = breeder.farms[0].id;
     handleVisitFarmSelect(breeder.farms[0].id);
   } else {
@@ -801,23 +869,6 @@ function selectBreederForForm(breeder) {
 
   // تنبيه وبائيات المنطقة
   checkRegionOutbreaks(breeder.address);
-
-  // الكشف وتنبيه مخزون الأدوية للصيدلية البيطرية المفضلة
-  const alertBox = document.getElementById("visit-preferred-pharmacy-alert");
-  if (breeder.preferredPharmacyId) {
-    const ph = pharmaciesData.find(p => p.id === breeder.preferredPharmacyId);
-    if (ph) {
-      alertBox.innerHTML = `🏢 <strong>مكتب الأدوية المعتمد للمربي:</strong> <span style="color:var(--color-gold); font-weight:bold;">${ph.name}</span> (د. ${ph.manager} - 📱 ${ph.phone})<br><span style="color:var(--color-success);">* سيقوم النظام تلقائياً بتظليل الأدوية المتوفرة لدى هذا المكتب باللون الأخضر في الروشتة لمساعدتك.</span>`;
-      alertBox.style.display = "block";
-    } else {
-      alertBox.style.display = "none";
-    }
-  } else {
-    alertBox.style.display = "none";
-  }
-
-  // إعادة رندرة الروشتة الحالية لتظليل أدوية المكتب
-  updateRxBuilderStockHighlights();
 
   showToast(`تم استيراد بيانات العميل "${breeder.name}" للفورم بنجاح`, "success");
 }
@@ -837,50 +888,36 @@ function handleVisitFarmSelect(farmId) {
     document.getElementById("visit-hatchery").value = farm.hatchery || "";
     document.getElementById("visit-capacity").value = farm.capacity || 0;
     
-    // محاولة تخمين الدورة الأخيرة أو توليد اسم تلقائي
     document.getElementById("visit-cycle").value = breeder.visits && breeder.visits[0] ? breeder.visits[0].cycle : "الدورة الحالية";
   }
 }
 
-// إدارة منشئ الروشتة الذكي
+// إدارة منشئ الروشتة الحر
 function resetPrescriptionBuilder() {
-  document.getElementById("rx-builder-rows").innerHTML = "";
+  const tbody = document.getElementById("rx-builder-rows");
+  if (!tbody) return;
+  tbody.innerHTML = "";
   addRxBuilderRow();
 }
 
-function addRxBuilderRow(medName = "", dose = "", duration = "", activeIng = "") {
+function addRxBuilderRow(treatment = "", dose = "") {
   const tbody = document.getElementById("rx-builder-rows");
+  if (!tbody) return;
+  
   const row = document.createElement("tr");
-
-  // كتالوج الأدوية
-  const catalog = window.MEDICINE_CATALOG || {};
-  if (!document.getElementById("meds-datalist")) {
-    let datalistHtml = `<datalist id="meds-datalist">`;
-    Object.keys(catalog).forEach(name => {
-      datalistHtml += `<option value="${name}">`;
-    });
-    datalistHtml += `</datalist>`;
-    document.body.insertAdjacentHTML('beforeend', datalistHtml);
-  }
 
   row.innerHTML = `
     <td>
-      <input type="text" class="rx-med-name-input" list="meds-datalist" value="${medName}" placeholder="اكتب اسم العلاج التجاري..." required onchange="handleMedChange(this)">
+      <input type="text" class="rx-med-name-input" list="meds-datalist" value="${treatment}" placeholder="اكتب العلاج أو التركيبة بحرية (مثال: تايلوزين + دوكسي)..." required>
     </td>
     <td>
-      <input type="text" class="rx-med-active-input" value="${activeIng}" placeholder="المادة الفعالة والتركيز..." readonly style="background:rgba(255,255,255,0.01);">
-    </td>
-    <td>
-      <input type="text" class="rx-med-dose-input" value="${dose}" placeholder="الجرعة وطريقة الصرف..." required>
+      <input type="text" class="rx-med-dose-input" value="${dose}" placeholder="الجرعة وطريقة الاستخدام (مثال: 0.5 جم/لتر لمدة 5 أيام)..." required>
     </td>
     <td style="text-align: center;">
       <button type="button" class="rx-remove-btn" onclick="removeRxBuilderRow(this)">🗑️</button>
     </td>
   `;
   tbody.appendChild(row);
-
-  // تحديث التظليل لصفوف المخزون
-  updateRxBuilderStockHighlights();
 }
 
 function removeRxBuilderRow(btn) {
@@ -892,107 +929,7 @@ function removeRxBuilderRow(btn) {
   }
 }
 
-function handleMedChange(input) {
-  const row = input.closest("tr");
-  const medName = input.value.trim();
-  const catalog = window.MEDICINE_CATALOG || {};
-
-  const activeInput = row.querySelector(".rx-med-active-input");
-  const doseInput = row.querySelector(".rx-med-dose-input");
-
-  if (catalog[medName]) {
-    activeInput.value = `${catalog[medName].activeIngredient} (${catalog[medName].concentration})`;
-    doseInput.value = `${catalog[medName].doseDefault} - لمدة ${catalog[medName].withdrawalDays} أيام فتره أمان`;
-  }
-
-  updateRxBuilderStockHighlights();
-}
-
-// تظليل الأدوية المتوفرة لدى مكتب الأدوية المفضل للمربي المختار باللون الأخضر
-function updateRxBuilderStockHighlights() {
-  const breederId = document.getElementById("visit-breeder-name").dataset.breederId;
-  if (!breederId) return;
-
-  const breeder = breedersData.find(b => b.id === breederId);
-  if (!breeder || !breeder.preferredPharmacyId) return;
-
-  const ph = pharmaciesData.find(p => p.id === breeder.preferredPharmacyId);
-  if (!ph || !ph.inventory) return;
-
-  const rows = document.querySelectorAll("#rx-builder-rows tr");
-  rows.forEach(row => {
-    const medInput = row.querySelector(".rx-med-name-input");
-    if (!medInput) return;
-    const medName = medInput.value.trim();
-
-    // البحث في مخزون الصيدلية المفضلة بالاسم التجاري
-    const isAvailable = ph.inventory.some(item => normalizeArabic(item.tradeName) === normalizeArabic(medName));
-    if (isAvailable && medName) {
-      row.classList.add("stock-available-row");
-      // وضع تلميح أو علامة توفر
-      medInput.title = "هذا الصنف متوفر حالياً بمخزون الصيدلية المعتمدة للمربي";
-    } else {
-      row.classList.remove("stock-available-row");
-    }
-  });
-}
-
-// البحث عن أدوية بديلة بالمادة الفعالة
-function searchAlternativeMedicine(query) {
-  const container = document.getElementById("alternative-meds-suggestions");
-  if (!query.trim()) {
-    container.style.display = "none";
-    return;
-  }
-
-  const normQuery = normalizeArabic(query);
-  const catalog = window.MEDICINE_CATALOG || {};
-  const matches = [];
-
-  Object.entries(catalog).forEach(([tradeName, details]) => {
-    if (normalizeArabic(details.activeIngredient).includes(normQuery) || normalizeArabic(tradeName).includes(normQuery)) {
-      matches.push({
-        tradeName: tradeName,
-        activeIngredient: details.activeIngredient,
-        concentration: details.concentration,
-        doseDefault: details.doseDefault
-      });
-    }
-  });
-
-  if (matches.length === 0) {
-    container.innerHTML = `<div style="font-size:11px; color:var(--text-muted); padding:5px;">لا يوجد بدائل مطابقة للمادة الفعالة</div>`;
-    container.style.display = "block";
-    return;
-  }
-
-  // معرف المربي
-  const breederId = document.getElementById("visit-breeder-name").dataset.breederId;
-  const breeder = breedersData.find(b => b.id === breederId);
-  const ph = breeder ? pharmaciesData.find(p => p.id === breeder.preferredPharmacyId) : null;
-
-  container.innerHTML = "<div style='font-size:11px; color:var(--accent-cyan); font-weight:bold; margin-bottom:5px;'>💡 الأدوية البديلة المطابقة للمادة الفعالة:</div>";
-  matches.slice(0, 4).forEach(m => {
-    // التحقق من توافر البديل في صيدليته المفضلة
-    const isAvailable = ph ? ph.inventory.some(item => normalizeArabic(item.tradeName) === normalizeArabic(m.tradeName)) : false;
-    const itemDiv = document.createElement("div");
-    itemDiv.className = "alt-med-item";
-    itemDiv.innerHTML = `
-      <span>💊 <strong>${m.tradeName}</strong> (${m.activeIngredient}) - ${isAvailable ? '<span style="color:var(--color-success); font-weight:bold;">متوفر بالمكتب</span>' : '<span style="color:var(--text-muted);">غير متوفر</span>'}</span>
-      <button type="button" class="add-btn">➕ إدراج</button>
-    `;
-    itemDiv.querySelector(".add-btn").onclick = () => {
-      // إلحاق الصنف بصف جديد بالروشتة
-      addRxBuilderRow(m.tradeName, m.doseDefault, "12 ساعة يومياً لمدة 5 أيام", `${m.activeIngredient} (${m.concentration})`);
-      container.style.display = "none";
-      document.getElementById("active-ingredient-search").value = "";
-    };
-    container.appendChild(itemDiv);
-  });
-  container.style.display = "block";
-}
-
-// تطبيق قوالب التشخيص الجاهزة للسرعة الفائقة
+// تطبيق قوالب التشخيص السريعة
 function applyPrescriptionTemplate(tempKey) {
   const templates = window.PRESCRIPTION_TEMPLATES || {};
   const temp = templates[tempKey];
@@ -1001,16 +938,14 @@ function applyPrescriptionTemplate(tempKey) {
   document.getElementById("visit-final-diagnosis").value = temp.diagnosis;
   document.getElementById("visit-general-notes").value = temp.notes;
 
-  // إخلاء البيلدر وبنائه بالقالب
   document.getElementById("rx-builder-rows").innerHTML = "";
   temp.prescriptions.forEach(p => {
-    addRxBuilderRow(p.name, p.dose, p.duration, p.activeIngredient || "");
+    addRxBuilderRow(p.name, p.dose);
   });
 
   showToast(`تم تطبيق قالب "${temp.name}" بنجاح`, "success");
 }
 
-// احتساب مديونيات الكشف والمدفوع والآجل للفورم تلقائياً
 function calculateVisitFinancials() {
   const cost = parseFloat(document.getElementById("visit-cost").value) || 0;
   const paid = parseFloat(document.getElementById("visit-paid").value) || 0;
@@ -1018,18 +953,17 @@ function calculateVisitFinancials() {
   document.getElementById("visit-debt-amount").value = debt;
 }
 
-// دالة تفريغ استمارة الكشف
 function resetVisitForm() {
   document.getElementById("new-visit-form").reset();
   delete document.getElementById("visit-breeder-name").dataset.breederId;
   document.getElementById("visit-farm-select").innerHTML = '<option value="">-- يرجى اختيار العميل أولاً --</option>';
-  document.getElementById("visit-preferred-pharmacy-alert").style.display = "none";
-  document.getElementById("form-epidemic-warning-box").style.display = "none";
+  const epidemicBox = document.getElementById("form-epidemic-warning-box");
+  if (epidemicBox) epidemicBox.style.display = "none";
   resetPrescriptionBuilder();
   calculateMortalityPercent();
 }
 
-// معالجة وحفظ زيارة كشف وتشريح جديدة
+// معالجة وحفظ زيارة كشف وتشخيص جديدة
 function handleSaveVisit(event) {
   event.preventDefault();
 
@@ -1058,30 +992,27 @@ function handleSaveVisit(event) {
   const finalDiagnosis = document.getElementById("visit-final-diagnosis").value.trim();
   const generalNotes = document.getElementById("visit-general-notes").value.trim();
 
-  // الماليات
   const cost = parseFloat(document.getElementById("visit-cost").value) || 0;
   const paid = parseFloat(document.getElementById("visit-paid").value) || 0;
   const debtAmount = cost - paid;
 
-  // استخراج الأدوية المكتوبة
+  // استخراج الأدوية الحرة المكتوبة
   const rows = document.querySelectorAll("#rx-builder-rows tr");
   const prescriptions = [];
   rows.forEach(r => {
     const medName = r.querySelector(".rx-med-name-input").value.trim();
-    const activeIng = r.querySelector(".rx-med-active-input").value.trim();
     const dose = r.querySelector(".rx-med-dose-input").value.trim();
 
     if (medName) {
       prescriptions.push({
         name: medName,
-        activeIngredient: activeIng,
         dose: dose
       });
     }
   });
 
   if (prescriptions.length === 0) {
-    showToast("يرجى إدراج دواء واحد على الأقل للروشتة المعتمدة!", "warning");
+    showToast("يرجى كتابة علاج واحد على الأقل للروشتة!", "warning");
     return;
   }
 
@@ -1097,7 +1028,6 @@ function handleSaveVisit(event) {
     immunityDetails: document.getElementById("lab-immunity").checked ? document.getElementById("lab-immunity-details").value.trim() : ""
   };
 
-  // التحقق من ربط العميل
   let breederId = document.getElementById("visit-breeder-name").dataset.breederId;
   let breederObj = null;
 
@@ -1106,7 +1036,6 @@ function handleSaveVisit(event) {
   }
 
   if (!breederObj) {
-    // إنشاء عميل ومزرعة جديدة تلقائياً إذا لم يكن مسجلاً
     breederId = "breeder_" + Date.now();
     const newFarmId = "farm_" + Date.now();
     
@@ -1137,7 +1066,6 @@ function handleSaveVisit(event) {
     };
     breedersData.push(breederObj);
   } else {
-    // عميل قائم: تحديث مزارعه ونظامه المالي التراكمي
     const oldDebt = breederObj.financialStatus ? breederObj.financialStatus.debtAmount : 0;
     const totalDebt = oldDebt + debtAmount;
     breederObj.financialStatus = {
@@ -1146,7 +1074,6 @@ function handleSaveVisit(event) {
       notes: totalDebt > 0 ? `تراكم مديونيات شامل كشف ${sampleDate}` : "خالص"
     };
 
-    // التحقق من العنبر المختار أو إنشائه إن لم يتوفر
     let farmObj = breederObj.farms.find(f => f.id === farmId);
     if (!farmObj) {
       const newFarmId = "farm_" + Date.now();
@@ -1164,7 +1091,6 @@ function handleSaveVisit(event) {
     }
   }
 
-  // صياغة الكشف وحفظه
   const visitId = "v_" + Date.now();
   const visitObj = {
     id: visitId,
@@ -1194,12 +1120,10 @@ function handleSaveVisit(event) {
   // طباعة مباشرة للروشتة
   printDirectPrescription(breederObj, visitObj);
 
-  // رفع البيانات لجوجل شيت إذا كانت المزامنة مفعلة
   if (syncSettings.syncMode === "cloud" && syncSettings.appsScriptUrl) {
     uploadVisitToCloud(breederObj, visitObj);
   }
 
-  // فتح التبويب وعرض ملف العميل فوراً
   selectBreederFromSearch(breederId);
   resetVisitForm();
 }
@@ -1220,7 +1144,6 @@ function calculateMortalityPercent() {
     const percent = ((totalMort / cap) * 100).toFixed(2);
     badge.textContent = `${percent}% نفوق`;
     
-    // قياس المؤشر للتنبيه
     if (today > yest && yest > before) {
       badge.className = "mortality-badge danger";
       text.innerHTML = "🚨 النفوق يتصاعد بشكل خطير!";
@@ -1288,7 +1211,6 @@ function renderFinancialAccounts(selectedDate) {
   document.getElementById("accounts-total-debts").textContent = `${totalDebt.toLocaleString()} ج.م`;
 }
 
-// طباعة التقرير المالي اليومي
 function printDailyFinancialReport() {
   const date = document.getElementById("accounts-date-picker").value;
   if (!date) return;
@@ -1377,14 +1299,6 @@ function printDailyFinancialReport() {
 
 // 1. مودال إضافة عميل
 function openAddBreederModal() {
-  const select = document.getElementById("modal-breeder-pharmacy-select");
-  select.innerHTML = '<option value="">-- لا يوجد مكتب أدوية معتمد --</option>';
-  pharmaciesData.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.name;
-    select.appendChild(opt);
-  });
   document.getElementById("add-breeder-modal").classList.add("active");
 }
 function closeAddBreederModal() {
@@ -1394,7 +1308,6 @@ function handleAddBreederSubmit() {
   const name = document.getElementById("modal-breeder-name-input").value.trim();
   const phone = document.getElementById("modal-breeder-phone-input").value.trim();
   const address = document.getElementById("modal-breeder-address-input").value.trim();
-  const preferredPharmacyId = document.getElementById("modal-breeder-pharmacy-select").value;
 
   if (!name || !phone || !address) {
     showToast("يرجى ملء كافة الحقول الإجبارية للعضوية!", "warning");
@@ -1406,7 +1319,7 @@ function handleAddBreederSubmit() {
     name: name,
     phone: phone,
     address: address,
-    preferredPharmacyId: preferredPharmacyId,
+    preferredPharmacyId: "",
     farms: [],
     visits: [],
     financialStatus: { hasDebt: false, debtAmount: 0, notes: "" }
@@ -1637,7 +1550,6 @@ function handleSettleDebtSubmit() {
 // تدوير وتعبئة عناصر الـ Dropdowns في شاشات الإدخال
 // ====================================================
 function populateDropdowns() {
-  // 1. العملاء في شاشة التحصينات
   const vacBreederSelect = document.getElementById("vac-breeder-select");
   if (vacBreederSelect) {
     const val = vacBreederSelect.value;
@@ -1657,12 +1569,13 @@ function populateDropdowns() {
 // ====================================================
 function checkRegionOutbreaks(addressText) {
   const warningBox = document.getElementById("form-epidemic-warning-box");
+  if (!warningBox) return;
+  
   if (!addressText || addressText.trim().length < 2) {
     warningBox.style.display = "none";
     return;
   }
 
-  // تجزئة الكلمات لتفادي تعقيدات الاختلافات النصية
   const cleanText = normalizeArabic(addressText);
   const words = cleanText.split(/[\s،\-]+/).filter(w => w.length > 2 && w !== "مزرعه" && w !== "الحاج" && w !== "طريق" && w !== "بوار" && w !== "بجوار");
 
@@ -1697,106 +1610,6 @@ function checkRegionOutbreaks(addressText) {
   }
 }
 
-function populateEpidemiologyRegionSelector() {
-  const selector = document.getElementById("epidemiology-region-selector");
-  selector.innerHTML = '<option value="">-- اختر المنطقة --</option>';
-  
-  let regions = new Set();
-  breedersData.forEach(b => {
-    if (b.address) {
-      const cleaned = b.address.split("،")[0].trim();
-      if (cleaned) regions.add(cleaned);
-    }
-  });
-
-  regions.forEach(r => {
-    const opt = document.createElement("option");
-    opt.value = r;
-    opt.textContent = r;
-    selector.appendChild(opt);
-  });
-
-  document.getElementById("region-epidemiology-report").style.display = "none";
-}
-
-function renderRegionEpidemiology(regionName) {
-  const reportDiv = document.getElementById("region-epidemiology-report");
-  const diseaseTbody = document.getElementById("epidemic-disease-rows");
-  const recentCasesList = document.getElementById("epidemic-recent-cases-list");
-
-  if (!regionName) {
-    reportDiv.style.display = "none";
-    return;
-  }
-
-  diseaseTbody.innerHTML = "";
-  recentCasesList.innerHTML = "";
-
-  const normRegion = normalizeArabic(regionName);
-  let diseaseCounts = {};
-  let totalCases = 0;
-  let recentCases = [];
-
-  breedersData.forEach(b => {
-    if (normalizeArabic(b.address).includes(normRegion) && b.visits) {
-      b.visits.forEach(v => {
-        if (v.finalDiagnosis) {
-          diseaseCounts[v.finalDiagnosis] = (diseaseCounts[v.finalDiagnosis] || 0) + 1;
-          totalCases++;
-          
-          const farmObj = b.farms.find(f => f.id === v.farmId) || {};
-          recentCases.push({
-            breederName: b.name,
-            date: v.date,
-            diagnosis: v.finalDiagnosis,
-            age: v.age,
-            farmName: farmObj.name || "عنبر عام"
-          });
-        }
-      });
-    }
-  });
-
-  if (totalCases === 0) {
-    diseaseTbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color:var(--text-muted);">لا يوجد تسجيلات مرضية لهذه المنطقة بعد</td></tr>`;
-    recentCasesList.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:12px;">لا يوجد حالات أخيرة</div>`;
-    reportDiv.style.display = "block";
-    return;
-  }
-
-  const sortedOutbreaks = Object.entries(diseaseCounts).sort((a,b) => b[1] - a[1]);
-  sortedOutbreaks.forEach(item => {
-    const diseaseName = item[0];
-    const count = item[1];
-    const percent = ((count / totalCases) * 100).toFixed(1);
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td style="font-weight:bold; color:var(--accent-blue-hover);">${diseaseName}</td>
-      <td style="text-align:center;">${count} حالات</td>
-      <td style="text-align:center;">${percent}%</td>
-    `;
-    diseaseTbody.appendChild(row);
-  });
-
-  // الحالات الأخيرة بالمنطقة
-  recentCases.sort((a, b) => new Date(b.date) - new Date(a.date));
-  recentCases.slice(0, 10).forEach(c => {
-    const caseDiv = document.createElement("div");
-    caseDiv.style.cssText = "background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); padding:8px; border-radius:4px; font-size:11px;";
-    caseDiv.innerHTML = `
-      <div style="display:flex; justify-content:space-between; font-weight:bold; margin-bottom:2px;">
-        <span>👤 ${c.breederName} (${c.farmName})</span>
-        <span style="color:var(--accent-cyan);">📅 ${c.date}</span>
-      </div>
-      <div>التشخيص: <strong>${c.diagnosis}</strong> (عمر: ${c.age})</div>
-    `;
-    recentCasesList.appendChild(caseDiv);
-  });
-
-  reportDiv.style.display = "block";
-}
-
 // ====================================================
 // منطق تصدير واسترجاع قاعدة البيانات (JSON Backup)
 // ====================================================
@@ -1804,6 +1617,7 @@ function exportBackupData() {
   const fullDB = {
     breeders: breedersData,
     pharmacies: pharmaciesData,
+    medicines: medicinesData,
     exportedAt: new Date().toISOString()
   };
   const dataStr = JSON.stringify(fullDB, null, 2);
@@ -1828,13 +1642,14 @@ function importBackupData(event) {
   reader.onload = function(e) {
     try {
       const fullDB = JSON.parse(e.target.result);
-      if (fullDB.breeders && fullDB.pharmacies) {
-        breedersData = fullDB.breeders;
-        pharmaciesData = fullDB.pharmacies;
+      if (fullDB.breeders) {
+        breedersData = fullDB.breeders || [];
+        pharmaciesData = fullDB.pharmacies || [];
+        medicinesData = fullDB.medicines || window.MOCK_MEDICINES || [];
         saveDataToLocal();
         showToast("تم استيراد قاعدة البيانات الاحتياطية بنجاح وتحديث النظام", "success");
       } else {
-        showToast("ملف النسخة الاحتياطية غير متوافق مع بنية الجيل الثاني للملفات!", "error");
+        showToast("ملف النسخة الاحتياطية غير متوافق!", "error");
       }
     } catch (err) {
       console.error(err);
@@ -1845,12 +1660,13 @@ function importBackupData(event) {
 }
 
 function clearLocalStorageDB() {
-  if (confirm("🚨 هل أنت متأكد تماماً من رغبتك في حذف قاعدة بيانات المربين ومكاتب الأدوية بالكامل وتصفير التطبيق؟")) {
+  if (confirm("🚨 هل أنت متأكد تماماً من رغبتك في حذف قاعدة بيانات المربين والأدوية بالكامل وتصفير التطبيق؟")) {
     localStorage.removeItem("poultry_breeders_db_v2");
     localStorage.removeItem("poultry_pharmacies_db_v2");
+    localStorage.removeItem("poultry_medicines_db_v2");
     initDatabase();
     saveDataToLocal();
-    showToast("تم تصفير قاعدة البيانات وإعادتها للافتراضيات البيولوجية", "warning");
+    showToast("تم تصفير قاعدة البيانات وإعادتها للافتراضيات", "warning");
   }
 }
 
@@ -1862,62 +1678,55 @@ function printDirectPrescription(breeder, visit) {
   if (!printContainer) return;
 
   const farmObj = breeder.farms.find(f => f.id === visit.farmId) || {};
-  const phObj = pharmaciesData.find(p => p.id === breeder.preferredPharmacyId);
 
-  // صياغة الأدوية
   let prescriptionsHtml = "";
   visit.prescriptions.forEach((p, index) => {
     prescriptionsHtml += `
       <tr>
-        <td style="padding:6px; border:1px solid #000; text-align:center;">${index + 1}</td>
-        <td style="padding:6px; border:1px solid #000; font-weight:bold;">${p.name}</td>
-        <td style="padding:6px; border:1px solid #000;">${p.activeIngredient || "-"}</td>
-        <td style="padding:6px; border:1px solid #000;">${p.dose}</td>
+        <td style="padding:8px 6px; border:1px solid #000; text-align:center; font-weight:bold;">${index + 1}</td>
+        <td style="padding:8px 10px; border:1px solid #000; font-weight:bold; font-size:13px;">${p.name}</td>
+        <td style="padding:8px 10px; border:1px solid #000; font-size:12px;">${p.dose}</td>
       </tr>
     `;
   });
 
   printContainer.innerHTML = `
-    <div style="font-family:'Cairo', sans-serif; direction:rtl; text-align:right; padding:10px; color:#000;">
+    <div style="font-family:'Cairo', sans-serif; direction:rtl; text-align:right; padding:15px; color:#000;">
       <!-- الترويسة الطبية المعتمدة للمعمل -->
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:14px;">
         <div>
-          <h2 style="margin:0; font-size:16px; color:#c00;">معمل دكتورة نجلاء لتشخيص أمراض الدواجن</h2>
-          <span style="font-size:11px; color:#555;">الاستشارات الفنية والتشريحية وتحاليل المناعات المتقدمة</span>
+          <h2 style="margin:0; font-size:18px; color:#990000;">معمل دكتورة نجلاء لتشخيص أمراض الدواجن</h2>
+          <span style="font-size:12px; color:#444;">الاستشارات الفنية والتشريحية وتحاليل المناعات المتقدمة</span>
         </div>
         <div style="text-align:left; font-size:11px;">
-          <span>تاريخ التشخيص: <strong>${visit.date}</strong></span><br>
-          <span>رقم الكشف: <strong>${visit.id.split('_')[1] || visit.id}</strong></span>
+          <span>تاريخ الكشف: <strong>${visit.date}</strong></span><br>
+          <span>رقم الإيصال: <strong>${visit.id.split('_')[1] || visit.id}</strong></span>
         </div>
       </div>
 
-      <!-- المربي وتوجيه الروشتة للمكتب المفضل -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:12px; margin-bottom:12px; background:#f9f9f9; padding:8px; border:1px solid #ddd; border-radius:4px;">
+      <!-- بيانات المربي والعنبر -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:12px; margin-bottom:14px; background:#f9f9f9; padding:10px; border:1px solid #ccc; border-radius:4px;">
         <div>اسم المربي: <strong>${breeder.name}</strong></div>
         <div>العنبر: <strong>${farmObj.name || "عنبر عام"}</strong></div>
         <div>نوع الطيور: <strong>${visit.birdType || farmObj.type || "-"} (${visit.breed || farmObj.breed || "-"})</strong></div>
-        <div>العمر: <strong>${visit.age}</strong></div>
-        <div style="grid-column: 1 / -1; border-top:1px dashed #ccc; padding-top:4px; margin-top:4px;">
-          🎯 موجهة إلى مكتب الأدوية: <strong style="color:#c00;">${phObj ? phObj.name + ' (مسؤول: ' + phObj.manager + ')' : 'أي مكتب أدوية معتمد لدى المربي'}</strong>
-        </div>
+        <div>العمر الحالي: <strong>${visit.age}</strong></div>
       </div>
 
       <!-- التشخيص الطبي النهائي -->
-      <div style="margin-bottom:12px;">
-        <span style="font-size:12px; font-weight:bold; color:#c00;">🎯 التشخيص النهائي المعتمد:</span>
-        <div style="font-size:13px; font-weight:bold; background:#fff3f3; padding:6px; border:1px solid #c00; border-radius:4px; margin-top:4px;">
+      <div style="margin-bottom:14px;">
+        <span style="font-size:12px; font-weight:bold; color:#990000;">🎯 التشخيص النهائي المعتمد:</span>
+        <div style="font-size:13px; font-weight:bold; background:#fff3f3; padding:8px 12px; border:1px solid #990000; border-radius:4px; margin-top:4px;">
           ${visit.finalDiagnosis}
         </div>
       </div>
 
-      <!-- جدول العلاجات الموصوفة -->
-      <table style="width:100%; border-collapse:collapse; margin-bottom:12px; font-size:11px;">
+      <!-- جدول العلاجات الموصوفة والجرعات -->
+      <table style="width:100%; border-collapse:collapse; margin-bottom:14px; font-size:12px;">
         <thead>
           <tr style="background:#f2f2f2;">
-            <th style="width:5%; padding:6px; border:1px solid #000;">#</th>
-            <th style="width:35%; padding:6px; border:1px solid #000; text-align:right;">اسم العلاج التجاري</th>
-            <th style="width:25%; padding:6px; border:1px solid #000; text-align:right;">المادة الفعالة والتركيز</th>
-            <th style="width:35%; padding:6px; border:1px solid #000; text-align:right;">الجرعة وطريقة الاستخدام</th>
+            <th style="width:6%; padding:8px 6px; border:1px solid #000;">#</th>
+            <th style="width:54%; padding:8px 10px; border:1px solid #000; text-align:right;">العلاج والأدوية والتركيبات الموصوفة</th>
+            <th style="width:40%; padding:8px 10px; border:1px solid #000; text-align:right;">الجرعة وطريقة الاستخدام والمدة</th>
           </tr>
         </thead>
         <tbody>
@@ -1925,20 +1734,20 @@ function printDirectPrescription(breeder, visit) {
         </tbody>
       </table>
 
-      <!-- ملاحظات الأمن البيولوجي والتحصينات المحددة -->
-      <div style="font-size:11px; margin-bottom:15px; border-top:1px dashed #ccc; padding-top:8px;">
+      <!-- ملاحظات وتوصيات الدكتورة -->
+      <div style="font-size:11px; margin-bottom:18px; border-top:1px dashed #bbb; padding-top:10px;">
         <strong>📌 توصيات الدكتورة والأمن البيولوجي:</strong>
-        <p style="margin:4px 0 0 0; line-height:1.4;">${visit.generalNotes || "ضرورة الاهتمام بالتهوية السليمة والتدفئة وتطهير خطوط النبل."}</p>
+        <p style="margin:4px 0 0 0; line-height:1.5;">${visit.generalNotes || "ضرورة الاهتمام بالتهوية السليمة والتدفئة وتطهير خطوط النبل."}</p>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:30px; font-size:11px; border-top:1px solid #000; padding-top:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:35px; font-size:11px; border-top:1px solid #000; padding-top:10px;">
         <div>توقيع طبيب التشخيص: <strong>د/ نجلاء</strong></div>
-        <div style="color:#666;">العنوان: ميت غمر، الدقهلية - هاتف العيادة: 01287654321</div>
+        <div style="color:#555;">العنوان: ميت غمر، الدقهلية - هاتف العيادة: 01287654321</div>
       </div>
     </div>
   `;
 
-  // طباعة مباشرة
+  // فتح نافذة الطباعة مباشرة
   window.print();
 }
 
@@ -1962,9 +1771,9 @@ function syncWithGoogleSheets() {
   fetch(syncSettings.appsScriptUrl + "?action=getAllData")
     .then(res => res.json())
     .then(data => {
-      if (data.breeders && data.pharmacies) {
+      if (data.breeders) {
         breedersData = data.breeders;
-        pharmaciesData = data.pharmacies;
+        pharmaciesData = data.pharmacies || [];
         
         localStorage.setItem("poultry_breeders_db_v2", JSON.stringify(breedersData));
         localStorage.setItem("poultry_pharmacies_db_v2", JSON.stringify(pharmaciesData));
@@ -1972,6 +1781,8 @@ function syncWithGoogleSheets() {
         renderDashboard();
         renderFarmsTable();
         renderPharmaciesTable();
+        renderMedicinesTable();
+        updateMedsDatalist();
         populateDropdowns();
 
         showToast("مزامنة سحابية: تم سحب وتحديث البيانات بنجاح!", "success");
@@ -2061,7 +1872,7 @@ function testSheetConnection() {
 function updateSyncBadge(isSuccess, textMsg = "") {
   const badge = document.getElementById("sync-status-badge");
   const text = document.getElementById("sync-status-text");
-  if (!badge) return;
+  if (!badge || !text) return;
 
   if (isSuccess) {
     badge.className = "sync-badge";
@@ -2072,7 +1883,7 @@ function updateSyncBadge(isSuccess, textMsg = "") {
   }
 }
 
-// نظام التنبيهات الطائرة المبسط
+// نظام التنبيهات الطائرة
 function showToast(message, type = "success") {
   const container = document.getElementById("toast-container");
   if (!container) return;
