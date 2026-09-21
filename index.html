@@ -2,8 +2,20 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>معمل دكتورة نجلاء لتشخيص أمراض الدواجن | لوحة التحكم المتكاملة</title>
+  
+  <!-- إعدادات تطبيق الويب التقدمي PWA للتثبيت على الموبايل واللابتوب -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#800000">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  
+  <!-- إعدادات التثبيت لأجهزة آبل iPhone & iPad -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="معمل د. نجلاء">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
   <!-- ملف التنسيق البصري المتجاوب -->
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -18,6 +30,9 @@
       <img src="logo.jpg" alt="Logo" class="mobile-logo-img">
       <span class="mobile-logo-title">معمل دكتورة نجلاء</span>
     </div>
+    <button id="mobile-pwa-install-btn" style="display:none; background:var(--color-gold); color:#000; border:none; padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold; cursor:pointer;" onclick="promptPWAInstall()">
+      📲 تثبيت
+    </button>
   </div>
 
   <!-- حاوية التطبيق الرئيسية -->
@@ -103,9 +118,14 @@
           <div class="search-suggestions" id="search-suggestions-dropdown"></div>
         </div>
 
-        <div class="doctor-meta">
-          <span class="doc-badge">معمل تشخيصي استشاري</span>
-          <div class="doc-name">دكتورة نجلاء - أمراض دواجن</div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button id="pwa-install-btn" style="display:none; align-items:center; gap:6px; padding:7px 14px; background:linear-gradient(135deg, #ffcc00, #f59e0b); color:#000; font-weight:bold; border-radius:8px; border:none; cursor:pointer; font-size:12px; box-shadow:0 2px 10px rgba(255,204,0,0.3);" onclick="promptPWAInstall()">
+            📲 تثبيت التطبيق على الجهاز
+          </button>
+          <div class="doctor-meta">
+            <span class="doc-badge">معمل تشخيصي استشاري</span>
+            <div class="doc-name">دكتورة نجلاء - أمراض دواجن</div>
+          </div>
         </div>
       </header>
 
@@ -764,6 +784,62 @@
       <!-- 10. تبويب النسخ الاحتياطي والربط السحابي (Backup) -->
       <section class="tab-content" id="tab-backup-content">
         <div class="settings-layout">
+          <!-- كارت هوية وبيانات المعمل للروشتة والطباعة -->
+          <div class="card-glass form-full-width" style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 class="card-title" style="border:none; margin:0; padding:0;">🏢 هوية وبيانات المعمل (المطبوعة في الروشتات)</h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">خصص اسم المعمل، اللوجو، العنوان، وأرقام الهواتف التي تظهر تلقائياً في ترويسة وتذييل كل روشتة وفاتورة.</p>
+              </div>
+              <button class="btn-primary" onclick="saveLabInfoSettings()">💾 حفظ بيانات وهوية المعمل</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div class="form-group">
+                <label for="setting-lab-name">اسم المعمل / العيادة الرسمي *</label>
+                <input type="text" class="form-input" id="setting-lab-name" placeholder="مثال: معمل دكتورة نجلاء لتشخيص أمراض الدواجن" required>
+              </div>
+
+              <div class="form-group">
+                <label for="setting-lab-subtitle">الوصف الفني / التخصص *</label>
+                <input type="text" class="form-input" id="setting-lab-subtitle" placeholder="مثال: الاستشارات الفنية والتشريحية وتحاليل المناعات المتقدمة" required>
+              </div>
+
+              <div class="form-group">
+                <label for="setting-lab-doctor">اسم الطبيب المشخص / المسؤول *</label>
+                <input type="text" class="form-input" id="setting-lab-doctor" placeholder="مثال: د/ نجلاء" required>
+              </div>
+
+              <div class="form-group">
+                <label for="setting-lab-phone">أرقام الهواتف للتواصل بالروشتة *</label>
+                <input type="text" class="form-input" id="setting-lab-phone" placeholder="مثال: 01287654321 - 01012345678" required>
+              </div>
+
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <label for="setting-lab-address">العنوان الجغرافي للمعمل / العيادة *</label>
+                <input type="text" class="form-input" id="setting-lab-address" placeholder="مثال: ميت غمر، محافظة الدقهلية" required>
+              </div>
+
+              <div class="form-group" style="grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.02); padding: 15px; border-radius: var(--radius-sm); border: 1px dashed rgba(255,255,255,0.1); flex-wrap: wrap;">
+                <div style="text-align: center;">
+                  <img id="setting-lab-logo-preview" src="logo.jpg" alt="Logo Preview" style="width: 70px; height: 70px; border-radius: 10px; object-fit: cover; border: 2px solid var(--color-gold); background: #fff;">
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">معاينة الشعار</div>
+                </div>
+                <div style="flex-grow: 1;">
+                  <label style="font-weight: bold; margin-bottom: 6px; display: block;">شعار / لوجو المعمل (يظهر بأعلى الروشتة في المنتصف)</label>
+                  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <label for="setting-lab-logo-input" class="btn-secondary-outline" style="cursor: pointer;">
+                      🖼️ رفع وتغيير صورة اللوجو
+                    </label>
+                    <input type="file" id="setting-lab-logo-input" accept="image/*" style="display: none;" onchange="handleLabLogoUpload(event)">
+                    <button type="button" class="btn-secondary-outline" onclick="resetLabLogoToDefault()">استعادة اللوجو الأصلي</button>
+                  </div>
+                  <span style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 6px;">الصورة يتم حفظها محلياً وتظهر تلقائياً في شاشة الطباعة والمعاينة.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- كارت ربط جوجل شيت -->
           <div class="card-glass">
             <h3 class="card-title">🔗 إعدادات الربط السحابي مع Google Sheets</h3>

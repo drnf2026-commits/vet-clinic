@@ -8,10 +8,68 @@ let selectedBreeder = null;      // العميل المختار في شاشة ا
 let selectedPharmacy = null;     // صيدلية مكتب الأدوية المختار لمشاهدة مخزونه
 let activeFarmForVac = null;     // العنبر المختار حالياً لإضافة التحصينات له
 let activePreviewVisit = null;   // الكشف والروشتة المعروضة حالياً بالمعاينة
+let deferredPrompt = null;       // كائن تثبيت التطبيق PWA
 let syncSettings = {
   appsScriptUrl: "",
   syncMode: "local" // local | cloud
 };
+
+// بيانات وهوية المعمل المطبوعة في الروشتات والفواتير
+let labInfo = {
+  name: "معمل دكتورة نجلاء لتشخيص أمراض الدواجن",
+  subtitle: "الاستشارات الفنية والتشريحية وتحاليل المناعات المتقدمة",
+  doctor: "د/ نجلاء",
+  phone: "01287654321",
+  address: "ميت غمر، محافظة الدقهلية",
+  logo: "logo.jpg"
+};
+
+// ====================================================
+// تسجيل Service Worker للعمل كتطبيق مثبت بدون إنترنت (PWA)
+// ====================================================
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then((reg) => console.log("PWA Service Worker جاهز:", reg.scope))
+      .catch((err) => console.log("PWA Service Worker خطأ:", err));
+  });
+}
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const desktopBtn = document.getElementById("pwa-install-btn");
+  const mobileBtn = document.getElementById("mobile-pwa-install-btn");
+  if (desktopBtn) desktopBtn.style.display = "inline-flex";
+  if (mobileBtn) mobileBtn.style.display = "inline-block";
+});
+
+function promptPWAInstall() {
+  if (!deferredPrompt) {
+    showToast("لتثبيت التطبيق: افتح خيارات المتصفح واضغط (إضافة إلى الشاشة الرئيسية)", "info");
+    return;
+  }
+  
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === "accepted") {
+      showToast("تم تثبيت التطبيق بنجاح على جهازك! 🎉", "success");
+    }
+    deferredPrompt = null;
+    const desktopBtn = document.getElementById("pwa-install-btn");
+    const mobileBtn = document.getElementById("mobile-pwa-install-btn");
+    if (desktopBtn) desktopBtn.style.display = "none";
+    if (mobileBtn) mobileBtn.style.display = "none";
+  });
+}
+
+window.addEventListener("appinstalled", () => {
+  showToast("تم تثبيت تطبيق المعمل بنجاح على جهازك!", "success");
+  const desktopBtn = document.getElementById("pwa-install-btn");
+  const mobileBtn = document.getElementById("mobile-pwa-install-btn");
+  if (desktopBtn) desktopBtn.style.display = "none";
+  if (mobileBtn) mobileBtn.style.display = "none";
+});
 
 // ====================================================
 // تهيئة التطبيق عند تحميل الصفحة (Initialization)
@@ -124,6 +182,7 @@ function saveDataToLocal() {
 }
 
 function loadSettings() {
+  loadLabInfo();
   try {
     const settingsRaw = localStorage.getItem("poultry_sync_settings_v2");
     if (settingsRaw) {
@@ -137,6 +196,87 @@ function loadSettings() {
   } catch (e) {
     console.error("خطأ في تحميل الإعدادات:", e);
   }
+}
+
+// ====================================================
+// إدارة بيانات وهوية المعمل المطبوعة (Lab Branding)
+// ====================================================
+function loadLabInfo() {
+  try {
+    const saved = localStorage.getItem("poultry_lab_info_v2");
+    if (saved) {
+      labInfo = Object.assign(labInfo, JSON.parse(saved));
+    }
+    populateLabInfoInputs();
+  } catch (e) {
+    console.error("خطأ في تحميل بيانات المعمل:", e);
+  }
+}
+
+function populateLabInfoInputs() {
+  const nameEl = document.getElementById("setting-lab-name");
+  const subEl = document.getElementById("setting-lab-subtitle");
+  const docEl = document.getElementById("setting-lab-doctor");
+  const phoneEl = document.getElementById("setting-lab-phone");
+  const addrEl = document.getElementById("setting-lab-address");
+  const previewEl = document.getElementById("setting-lab-logo-preview");
+
+  if (nameEl) nameEl.value = labInfo.name || "";
+  if (subEl) subEl.value = labInfo.subtitle || "";
+  if (docEl) docEl.value = labInfo.doctor || "";
+  if (phoneEl) phoneEl.value = labInfo.phone || "";
+  if (addrEl) addrEl.value = labInfo.address || "";
+  if (previewEl) previewEl.src = labInfo.logo || "logo.jpg";
+}
+
+function saveLabInfoSettings() {
+  const name = document.getElementById("setting-lab-name") ? document.getElementById("setting-lab-name").value.trim() : "";
+  const subtitle = document.getElementById("setting-lab-subtitle") ? document.getElementById("setting-lab-subtitle").value.trim() : "";
+  const doctor = document.getElementById("setting-lab-doctor") ? document.getElementById("setting-lab-doctor").value.trim() : "";
+  const phone = document.getElementById("setting-lab-phone") ? document.getElementById("setting-lab-phone").value.trim() : "";
+  const address = document.getElementById("setting-lab-address") ? document.getElementById("setting-lab-address").value.trim() : "";
+
+  if (!name) {
+    showToast("يرجى إدخال اسم المعمل الرسمي", "warning");
+    return;
+  }
+
+  labInfo.name = name;
+  labInfo.subtitle = subtitle;
+  labInfo.doctor = doctor;
+  labInfo.phone = phone;
+  labInfo.address = address;
+
+  localStorage.setItem("poultry_lab_info_v2", JSON.stringify(labInfo));
+  showToast("تم حفظ بيانات وهوية المعمل بنجاح! ستظهر في كافة الروشتات", "success");
+}
+
+function handleLabLogoUpload(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    showToast("يرجى اختيار ملف صورة صالح (JPG / PNG)", "error");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    labInfo.logo = e.target.result;
+    const previewEl = document.getElementById("setting-lab-logo-preview");
+    if (previewEl) previewEl.src = labInfo.logo;
+    localStorage.setItem("poultry_lab_info_v2", JSON.stringify(labInfo));
+    showToast("تم تحديث وحفظ لوجو المعمل الجديد بنجاح!", "success");
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetLabLogoToDefault() {
+  labInfo.logo = "logo.jpg";
+  const previewEl = document.getElementById("setting-lab-logo-preview");
+  if (previewEl) previewEl.src = "logo.jpg";
+  localStorage.setItem("poultry_lab_info_v2", JSON.stringify(labInfo));
+  showToast("تمت استعادة اللوجو الافتراضي للمعمل", "success");
 }
 
 function saveSettings() {
@@ -195,6 +335,8 @@ function switchTab(tabName) {
     const picker = document.getElementById("accounts-date-picker");
     if (picker) picker.value = todayStr;
     renderFinancialAccounts(todayStr);
+  } else if (tabName === "backup") {
+    populateLabInfoInputs();
   }
 
   // إغلاق المينيو الجانبي على الموبايل تلقائياً
@@ -1684,15 +1826,17 @@ function printDirectPrescription(breeder, visit) {
   const printContainer = document.getElementById("print-rx-template");
   if (!printContainer) return;
 
-  const farmObj = breeder.farms.find(f => f.id === visit.farmId) || {};
+  const farmObj = (breeder.farms || []).find(f => f.id === visit.farmId) || {};
 
   let prescriptionsHtml = "";
-  visit.prescriptions.forEach((p, index) => {
+  (visit.prescriptions || []).forEach((p, index) => {
+    const name = p.name || p.tradeName || "علاج";
+    const dose = p.dose || "-";
     prescriptionsHtml += `
       <tr>
         <td style="padding:8px 6px; border:1px solid #000; text-align:center; font-weight:bold;">${index + 1}</td>
-        <td style="padding:8px 10px; border:1px solid #000; font-weight:bold; font-size:13px;">${p.name}</td>
-        <td style="padding:8px 10px; border:1px solid #000; font-size:12px;">${p.dose}</td>
+        <td style="padding:8px 10px; border:1px solid #000; font-weight:bold; font-size:13px;">${name}</td>
+        <td style="padding:8px 10px; border:1px solid #000; font-size:12px;">${dose}</td>
       </tr>
     `;
   });
@@ -1700,14 +1844,21 @@ function printDirectPrescription(breeder, visit) {
   printContainer.innerHTML = `
     <div style="font-family:'Cairo', sans-serif; direction:rtl; text-align:right; padding:15px; color:#000;">
       <!-- الترويسة الطبية المعتمدة للمعمل -->
-      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:14px;">
-        <div>
-          <h2 style="margin:0; font-size:18px; color:#990000;">معمل دكتورة نجلاء لتشخيص أمراض الدواجن</h2>
-          <span style="font-size:12px; color:#444;">الاستشارات الفنية والتشريحية وتحاليل المناعات المتقدمة</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #800000; padding-bottom:10px; margin-bottom:14px; gap:10px;">
+        <div style="flex:1; text-align:right;">
+          <h2 style="margin:0; font-size:17px; color:#800000; font-weight:800;">${labInfo.name}</h2>
+          <div style="font-size:11px; color:#444; margin-top:2px;">${labInfo.subtitle}</div>
+          <div style="font-size:11px; color:#1e293b; margin-top:2px;">إشراف الطبيب: <strong>${labInfo.doctor}</strong></div>
         </div>
-        <div style="text-align:left; font-size:11px;">
-          <span>تاريخ الكشف: <strong>${visit.date}</strong></span><br>
-          <span>رقم الإيصال: <strong>${visit.id.split('_')[1] || visit.id}</strong></span>
+        
+        <!-- اللوجو بالمنتصف -->
+        <div style="text-align:center; flex-shrink:0;">
+          <img src="${labInfo.logo || 'logo.jpg'}" alt="Lab Logo" style="width:72px; height:72px; object-fit:contain; border-radius:8px; border:1.5px solid #ffcc00; padding:2px; background:#fff;">
+        </div>
+
+        <div style="flex:1; text-align:left; font-size:11px;">
+          <span>📅 تاريخ الكشف: <strong>${visit.date}</strong></span><br>
+          <span>🔢 رقم الروشتة: <strong>${(visit.id || "").replace("visit_", "")}</strong></span>
         </div>
       </div>
 
@@ -1721,8 +1872,8 @@ function printDirectPrescription(breeder, visit) {
 
       <!-- التشخيص الطبي النهائي -->
       <div style="margin-bottom:14px;">
-        <span style="font-size:12px; font-weight:bold; color:#990000;">🎯 التشخيص النهائي المعتمد:</span>
-        <div style="font-size:13px; font-weight:bold; background:#fff3f3; padding:8px 12px; border:1px solid #990000; border-radius:4px; margin-top:4px;">
+        <span style="font-size:12px; font-weight:bold; color:#800000;">🎯 التشخيص النهائي المعتمد:</span>
+        <div style="font-size:13px; font-weight:bold; background:#fff3f3; padding:8px 12px; border:1px solid #800000; border-radius:4px; margin-top:4px;">
           ${visit.finalDiagnosis}
         </div>
       </div>
@@ -1743,13 +1894,15 @@ function printDirectPrescription(breeder, visit) {
 
       <!-- ملاحظات وتوصيات الدكتورة -->
       <div style="font-size:11px; margin-bottom:18px; border-top:1px dashed #bbb; padding-top:10px;">
-        <strong>📌 توصيات الدكتورة والأمن البيولوجي:</strong>
+        <strong>📌 توصيات الطبيبة والأمن البيولوجي:</strong>
         <p style="margin:4px 0 0 0; line-height:1.5;">${visit.generalNotes || "ضرورة الاهتمام بالتهوية السليمة والتدفئة وتطهير خطوط النبل."}</p>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:35px; font-size:11px; border-top:1px solid #000; padding-top:10px;">
-        <div>توقيع طبيب التشخيص: <strong>د/ نجلاء</strong></div>
-        <div style="color:#555;">العنوان: ميت غمر، الدقهلية - هاتف العيادة: 01287654321</div>
+      <!-- تذييل الروشتة مع العنوان والهاتف والتوقيع -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:30px; font-size:11px; border-top:1.5px solid #800000; padding-top:10px; color:#222;">
+        <div>توقيع طبيب التشخيص: <strong style="color:#800000; font-size:12px;">${labInfo.doctor}</strong></div>
+        <div>📍 العنوان: <strong>${labInfo.address}</strong></div>
+        <div>📞 هاتف المعمل: <strong style="direction:ltr; display:inline-block;">${labInfo.phone}</strong></div>
       </div>
     </div>
   `;
@@ -1808,12 +1961,19 @@ function openViewPrescriptionModal(breederId, visitId) {
     previewContent.innerHTML = `
       <div style="font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; color: #1e293b;">
         <!-- الترويسة الطبية -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #800000; padding-bottom: 12px; margin-bottom: 15px;">
-          <div>
-            <h2 style="margin: 0; font-size: 18px; color: #800000; font-weight: 800;">معمل دكتورة نجلاء لتشخيص أمراض الدواجن</h2>
-            <span style="font-size: 12px; color: #64748b;">الاستشارات الفنية والتشريحية وتحاليل المناعات المتقدمة</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #800000; padding-bottom: 12px; margin-bottom: 15px; gap: 10px;">
+          <div style="flex: 1; text-align: right;">
+            <h2 style="margin: 0; font-size: 18px; color: #800000; font-weight: 800;">${labInfo.name}</h2>
+            <div style="font-size: 12px; color: #64748b; margin-top: 2px;">${labInfo.subtitle}</div>
+            <div style="font-size: 12px; color: #1e293b; margin-top: 2px;">إشراف الطبيب: <strong>${labInfo.doctor}</strong></div>
           </div>
-          <div style="text-align: left; font-size: 12px; color: #475569;">
+          
+          <!-- اللوجو بالمنتصف -->
+          <div style="text-align: center; flex-shrink: 0;">
+            <img src="${labInfo.logo || 'logo.jpg'}" alt="Lab Logo" style="width: 70px; height: 70px; object-fit: contain; border-radius: 8px; border: 2px solid #ffcc00; padding: 2px; background: #fff;">
+          </div>
+
+          <div style="flex: 1; text-align: left; font-size: 12px; color: #475569;">
             <div>📅 تاريخ الكشف: <strong style="color: #0f172a;">${visit.date}</strong></div>
             <div>🔢 رقم الإيصال: <strong style="color: #0f172a;">${(visit.id || "").replace("visit_", "")}</strong></div>
           </div>
@@ -1859,9 +2019,10 @@ function openViewPrescriptionModal(breederId, visitId) {
         </div>` : ''}
 
         <!-- التذييل والتوقيع -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 15px; font-size: 12px; color: #64748b;">
-          <div>توقيع طبيب التشخيص: <strong style="color: #800000; font-size: 13px;">د/ نجلاء</strong></div>
-          <div>📍 ميت غمر، الدقهلية - 📞 01287654321</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1.5px solid #800000; padding-top: 12px; margin-top: 15px; font-size: 12px; color: #334155;">
+          <div>توقيع طبيب التشخيص: <strong style="color: #800000; font-size: 13px;">${labInfo.doctor}</strong></div>
+          <div>📍 ${labInfo.address}</div>
+          <div>📞 <strong style="direction:ltr; display:inline-block;">${labInfo.phone}</strong></div>
         </div>
       </div>
     `;
