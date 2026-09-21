@@ -55,6 +55,10 @@
           <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z"/></svg>
           <span>تسجيل كشف جديد</span>
         </div>
+        <div class="nav-item" id="nav-prescriptions" onclick="switchTab('prescriptions')">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          <span>سجل الروشتات السابقة</span>
+        </div>
         <div class="nav-item" id="nav-medicines" onclick="switchTab('medicines')">
           <svg viewBox="0 0 24 24"><path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15z M19 3H5c-1.1 0-2 .9-2 2v3h18V5c0-1.1-.9-2-2-2z M21 16H3v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3z"/></svg>
           <span>دليل وأسماء الأدوية</span>
@@ -68,7 +72,7 @@
           <span>التحصينات</span>
         </div>
         <div class="nav-item" id="nav-accounts" onclick="switchTab('accounts')">
-          <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2-.9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
           <span>الحسابات والتحصيلات</span>
         </div>
         <div class="nav-item" id="nav-backup" onclick="switchTab('backup')">
@@ -118,7 +122,7 @@
             <span class="stat-val" id="stat-total-farms">0</span>
           </div>
           <div class="stat-card" style="border-right: 4px solid var(--color-success);">
-            <span class="stat-label">🩺 إجمالي الكشوفات والزيارات</span>
+            <span class="stat-label">🩺 إجمالي الكشوفات والروشتات</span>
             <span class="stat-val" id="stat-total-visits">0</span>
           </div>
           <div class="stat-card" style="border-right: 4px solid var(--color-warning);">
@@ -133,14 +137,18 @@
           <div style="display: flex; gap: 15px; flex-wrap: wrap; margin-top: 15px;">
             <button class="btn-primary" onclick="openAddBreederModal()">➕ تسجيل عميل جديد</button>
             <button class="btn-secondary-outline" onclick="switchTab('visits')">📝 فتح كشف طبي جديد</button>
+            <button class="btn-secondary-outline" onclick="switchTab('prescriptions')">📑 سجل الروشتات السابقة</button>
             <button class="btn-secondary-outline" onclick="openAddMedicineModal()">💊 تسجيل دواء جديد بالدليل</button>
             <button class="btn-secondary-outline" onclick="openAddFarmModal()">🚜 تسجيل عنبر/مزرعة</button>
           </div>
         </div>
         
-        <!-- الحالات الأخيرة بالمعمل -->
+        <!-- الحالات والروشتات الأخيرة بالمعمل -->
         <div class="card-glass" style="margin-top: 24px;">
-          <h3 class="card-title">📅 الكشوفات الأخيرة بالمعمل</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+            <h3 class="card-title" style="border:none; margin:0; padding:0;">📅 الكشوفات والروشتات الأخيرة بالمعمل</h3>
+            <button class="btn-secondary-outline" style="font-size: 11px; padding: 4px 10px;" onclick="switchTab('prescriptions')">عرض كافة الروشتات ⬅</button>
+          </div>
           <div style="overflow-x: auto; margin-top: 15px;">
             <table class="med-table" style="width: 100%;">
               <thead>
@@ -150,7 +158,7 @@
                   <th>العمر</th>
                   <th>التاريخ</th>
                   <th>التشخيص النهائي</th>
-                  <th>الإجراء</th>
+                  <th style="text-align: center;">إجراءات الروشتة</th>
                 </tr>
               </thead>
               <tbody id="dashboard-recent-visits-rows">
@@ -248,9 +256,9 @@
               </div>
             </div>
 
-            <!-- سجل الزيارات الميدانية المفصلة للعميل -->
+            <!-- سجل الزيارات الميدانية والروشتات المفصلة للعميل -->
             <div class="card-glass" style="margin-top: 20px;">
-              <h3 class="card-title">🩺 السجل التاريخي للزيارات والكشوفات</h3>
+              <h3 class="card-title">🩺 السجل التاريخي للزيارات والروشتات</h3>
               <div id="breeder-visits-timeline" style="margin-top: 15px;">
                 <!-- خط زيارات العميل -->
               </div>
@@ -529,7 +537,48 @@
         </form>
       </section>
 
-      <!-- 5. تبويب دليل وأسماء الأدوية المسجلة (Medicines Directory) -->
+      <!-- 5. تبويب سجل الروشتات السابقة والكشوفات (Prescriptions Archive) -->
+      <section class="tab-content" id="tab-prescriptions-content">
+        <div class="card-glass">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+            <div>
+              <h3 class="card-title" style="border:none; margin:0; padding:0;">📑 أرشيف وسجل الروشتات والكشوفات السابقة</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">ابحث واستعرض أو أعد طباعة أي روشتة صدرت من المعمل في أي وقت.</p>
+            </div>
+            <button class="btn-primary" onclick="switchTab('visits')">📝 كشف وروشتة جديدة</button>
+          </div>
+
+          <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+            <div class="form-group" style="flex-grow: 1; max-width: 400px; margin: 0;">
+              <input type="text" class="form-input" id="prescriptions-search-input" placeholder="🔍 ابحث باسم المربي، الدواء، أو التشخيص..." oninput="handlePrescriptionsSearch()">
+            </div>
+            <div class="form-group" style="width: 180px; margin: 0;">
+              <input type="date" class="form-input" id="prescriptions-date-filter" onchange="handlePrescriptionsSearch()">
+            </div>
+            <button class="btn-secondary-outline" style="padding: 6px 14px;" onclick="clearPrescriptionFilters()">إلغاء الفلتر ✕</button>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table class="med-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th style="width: 10%;">التاريخ</th>
+                  <th style="width: 18%;">اسم العميل</th>
+                  <th style="width: 14%;">العنبر</th>
+                  <th style="width: 18%;">التشخيص النهائي</th>
+                  <th style="width: 25%;">الأدوية والتركيبات الموصوفة</th>
+                  <th style="width: 15%; text-align: center;">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody id="prescriptions-log-rows">
+                <!-- تعبأ ديناميكياً -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. تبويب دليل وأسماء الأدوية المسجلة (Medicines Directory) -->
       <section class="tab-content" id="tab-medicines-content">
         <div class="card-glass">
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
@@ -562,7 +611,7 @@
         </div>
       </section>
 
-      <!-- 6. تبويب مكاتب الأدوية والمخزون (Pharmacy) -->
+      <!-- 7. تبويب مكاتب الأدوية والمخزون (Pharmacy) -->
       <section class="tab-content" id="tab-pharmacy-content">
         <div class="card-glass">
           <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; margin-bottom: 20px;">
@@ -614,7 +663,7 @@
         </div>
       </section>
 
-      <!-- 7. تبويب التحصينات (Vaccinations) -->
+      <!-- 8. تبويب التحصينات (Vaccinations) -->
       <section class="tab-content" id="tab-vaccinations-content">
         <div class="card-glass">
           <h3 class="card-title">💉 جدول تحصينات العنابر والمزارع</h3>
@@ -663,9 +712,8 @@
         </div>
       </section>
 
-      <!-- 8. تبويب الحسابات والتحصيلات (Accounts) -->
+      <!-- 9. تبويب الحسابات والتحصيلات (Accounts) -->
       <section class="tab-content" id="tab-accounts-content">
-        <!-- كروت التموضع المالي الشامل للعيادة -->
         <div class="stats-grid">
           <div class="stat-card" style="border-right: 4px solid var(--color-success);">
             <span class="stat-label">💸 إجمالي الإيرادات النقدية المحصلة</span>
@@ -713,7 +761,7 @@
         </div>
       </section>
 
-      <!-- 9. تبويب النسخ الاحتياطي والربط السحابي (Backup) -->
+      <!-- 10. تبويب النسخ الاحتياطي والربط السحابي (Backup) -->
       <section class="tab-content" id="tab-backup-content">
         <div class="settings-layout">
           <!-- كارت ربط جوجل شيت -->
@@ -776,7 +824,26 @@
   <!-- النوافذ المنبثقة التفاعلية (Modals) -->
   <!-- ======================================================= -->
 
-  <!-- مودال 1: إضافة مربي جديد -->
+  <!-- مودال 1: معاينة وعرض الروشتة السابقة -->
+  <div class="modal-overlay" id="view-prescription-modal">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>📄 معاينة الروشتة والتشخيص</span>
+        <button onclick="closeViewPrescriptionModal()" style="background: none; border: none; font-size: 22px; color: var(--text-muted); cursor: pointer;">✕</button>
+      </div>
+      
+      <div id="modal-rx-preview-content" style="padding: 10px 0;">
+        <!-- يتم حقنه ديناميكياً -->
+      </div>
+
+      <div class="modal-actions" style="margin-top: 15px;">
+        <button class="btn-secondary-outline" onclick="closeViewPrescriptionModal()">إغلاق</button>
+        <button class="btn-primary" id="btn-modal-print-rx" onclick="printFromPreviewModal()">🖨️ طباعة هذه الروشتة الآن</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال 2: إضافة مربي جديد -->
   <div class="modal-overlay" id="add-breeder-modal">
     <div class="modal-content">
       <div class="modal-header">👥 تسجيل عميل (مربي دواجن) جديد</div>
@@ -803,7 +870,7 @@
     </div>
   </div>
 
-  <!-- مودال 2: إضافة عنبر/مزرعة -->
+  <!-- مودال 3: إضافة عنبر/مزرعة -->
   <div class="modal-overlay" id="add-farm-modal">
     <div class="modal-content">
       <div class="modal-header">🚜 تسجيل عنبر/مستودع جديد</div>
@@ -865,7 +932,7 @@
     </div>
   </div>
 
-  <!-- مودال 3: تسجيل دواء جديد بالدليل -->
+  <!-- مودال 4: تسجيل دواء جديد بالدليل -->
   <div class="modal-overlay" id="add-medicine-modal">
     <div class="modal-content">
       <div class="modal-header">💊 تسجيل دواء / علاج جديد في الدليل</div>
@@ -887,7 +954,7 @@
     </div>
   </div>
 
-  <!-- مودال 4: إضافة مكتب أدوية بيطرية -->
+  <!-- مودال 5: إضافة مكتب أدوية بيطرية -->
   <div class="modal-overlay" id="add-pharmacy-modal">
     <div class="modal-content">
       <div class="modal-header">🏢 تسجيل مكتب أدوية بيطرية جديد</div>
@@ -919,7 +986,7 @@
     </div>
   </div>
 
-  <!-- مودال 5: إضافة دواء لمخزن مكتب أدوية -->
+  <!-- مودال 6: إضافة دواء لمخزن مكتب أدوية -->
   <div class="modal-overlay" id="add-drug-modal">
     <div class="modal-content">
       <div class="modal-header" id="modal-drug-header">💊 إضافة علاج لمخزون مكتب الأدوية</div>
@@ -951,7 +1018,7 @@
     </div>
   </div>
 
-  <!-- مودال 6: إضافة تحصينة لعنبر محدد -->
+  <!-- مودال 7: إضافة تحصينة لعنبر محدد -->
   <div class="modal-overlay" id="add-vaccination-modal">
     <div class="modal-content">
       <div class="modal-header">💉 إضافة تحصينة للعنبر</div>
@@ -986,7 +1053,7 @@
     </div>
   </div>
 
-  <!-- مودال 7: تسوية مديونية عميل بيطري -->
+  <!-- مودال 8: تسوية مديونية عميل بيطري -->
   <div class="modal-overlay" id="settle-debt-modal">
     <div class="modal-content">
       <div class="modal-header">💵 تسوية مديونية العميل المالي</div>
@@ -1009,6 +1076,25 @@
       <div class="modal-actions">
         <button class="btn-danger" onclick="closeSettleDebtModal()">إلغاء</button>
         <button class="btn-primary" onclick="handleSettleDebtSubmit()">💵 تأكيد سداد الديون</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- مودال 9: معاينة وطباعة الروشتة السابقة -->
+  <div class="modal-overlay" id="view-prescription-modal">
+    <div class="modal-content" style="max-width: 720px; width: 95%; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <span>📑 معاينة الروشتة الطبية</span>
+        <button class="btn-secondary-outline" style="padding: 2px 8px; font-size: 14px;" onclick="closeViewPrescriptionModal()">✕</button>
+      </div>
+      
+      <div id="modal-rx-preview-content" style="background: #ffffff; color: #111; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+        <!-- محتوى الروشتة للمعاينة -->
+      </div>
+
+      <div class="modal-actions" style="margin-top: 15px;">
+        <button class="btn-danger" onclick="closeViewPrescriptionModal()">إغلاق</button>
+        <button class="btn-primary" onclick="printFromPreviewModal()">🖨️ طباعة الروشتة الآن</button>
       </div>
     </div>
   </div>

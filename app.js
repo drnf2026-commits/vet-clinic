@@ -7,6 +7,7 @@ let medicinesData = [];          // دليل وأسماء الأدوية الم�
 let selectedBreeder = null;      // العميل المختار في شاشة التاريخ المرضي
 let selectedPharmacy = null;     // صيدلية مكتب الأدوية المختار لمشاهدة مخزونه
 let activeFarmForVac = null;     // العنبر المختار حالياً لإضافة التحصينات له
+let activePreviewVisit = null;   // الكشف والروشتة المعروضة حالياً بالمعاينة
 let syncSettings = {
   appsScriptUrl: "",
   syncMode: "local" // local | cloud
@@ -183,6 +184,8 @@ function switchTab(tabName) {
     renderDashboard();
   } else if (tabName === "farms") {
     renderFarmsTable();
+  } else if (tabName === "prescriptions") {
+    renderPrescriptionsLog();
   } else if (tabName === "medicines") {
     renderMedicinesTable();
   } else if (tabName === "pharmacy") {
@@ -267,8 +270,11 @@ function renderDashboard() {
         <td>${v.age}</td>
         <td>📅 ${v.date}</td>
         <td style="font-weight:bold; color:var(--color-gold);">${v.finalDiagnosis}</td>
-        <td>
-          <button class="btn-secondary-outline" style="padding:4px 8px; font-size:11px;" onclick="selectBreederFromSearch('${v.breederId}')">🔍 عرض الملف</button>
+        <td style="text-align:center;">
+          <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+            <button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="openViewPrescriptionModal('${v.breederId}', '${v.id}')">👁️ معاينة</button>
+            <button class="btn-secondary-outline" style="padding:4px 8px; font-size:11px;" onclick="printSpecificVisitRx('${v.breederId}', '${v.id}')">🖨️ طباعة</button>
+          </div>
         </td>
       `;
       recentVisitsRows.appendChild(tr);
@@ -578,8 +584,9 @@ function renderClientVisitsTimeline(breeder) {
         <p>📋 الأعراض والتشريح: ${v.symptoms || "لم تدون أعراض تفصيلية"}</p>
         <p style="margin-top:5px; color:var(--accent-cyan);">💊 العلاجات والروشتة: ${medsHtml || "لا يوجد أدوية موصوفة"}</p>
         <p style="margin-top:5px; font-size:11px; color:var(--text-muted);">🔬 الفحوصات المعملية: PCR: ${v.labTests && v.labTests.pcr ? "إيجابي" : "لا يوجد"} | ELISA: ${v.labTests && v.labTests.elisa ? "نعم" : "لا يوجد"} | الحساسية: ${v.labTests && v.labTests.sensitivity ? "نعم" : "لا يوجد"}</p>
-        <div style="margin-top:8px;">
-          <button class="btn-secondary-outline" style="padding:4px 8px; font-size:11px;" onclick="printSpecificVisitRx('${breeder.id}', '${v.id}')">🖨️ إعادة طباعة الروشتة</button>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn-primary" style="padding:4px 10px; font-size:11px;" onclick="openViewPrescriptionModal('${breeder.id}', '${v.id}')">👁️ معاينة الروشتة</button>
+          <button class="btn-secondary-outline" style="padding:4px 10px; font-size:11px;" onclick="printSpecificVisitRx('${breeder.id}', '${v.id}')">🖨️ طباعة الروشتة</button>
         </div>
       </div>
     `;
@@ -1754,10 +1761,257 @@ function printDirectPrescription(breeder, visit) {
 function printSpecificVisitRx(breederId, visitId) {
   const breeder = breedersData.find(b => b.id === breederId);
   if (!breeder) return;
-  const visit = breeder.visits.find(v => v.id === visitId);
+  const visit = (breeder.visits || []).find(v => v.id === visitId);
   if (!visit) return;
   
   printDirectPrescription(breeder, visit);
+}
+
+// ====================================================
+// معاينة الروشتات وطباعتها (Prescription Preview & Modal)
+// ====================================================
+function openViewPrescriptionModal(breederId, visitId) {
+  const breeder = breedersData.find(b => b.id === breederId);
+  if (!breeder) {
+    showToast("تعذر العثور على بيانات العميل", "error");
+    return;
+  }
+  const visit = (breeder.visits || []).find(v => v.id === visitId);
+  if (!visit) {
+    showToast("تعذر العثور على الكشف والروشتة المطلوبة", "error");
+    return;
+  }
+
+  activePreviewVisit = { breeder, visit };
+
+  const farmObj = (breeder.farms || []).find(f => f.id === visit.farmId) || {};
+  const previewContent = document.getElementById("modal-rx-preview-content");
+  
+  if (previewContent) {
+    let prescriptionsHtml = "";
+    (visit.prescriptions || []).forEach((p, idx) => {
+      const name = p.name || p.tradeName || "صنف علاجي";
+      const dose = p.dose || "-";
+      prescriptionsHtml += `
+        <tr style="border-bottom: 1px solid #e2e8f0;">
+          <td style="padding: 10px 8px; text-align: center; font-weight: bold; color: #64748b;">${idx + 1}</td>
+          <td style="padding: 10px; font-weight: 700; color: #1e293b; font-size: 14px;">${name}</td>
+          <td style="padding: 10px; color: #334155; font-size: 13px;">${dose}</td>
+        </tr>
+      `;
+    });
+
+    if (!prescriptionsHtml) {
+      prescriptionsHtml = `<tr><td colspan="3" style="text-align: center; padding: 15px; color: #888;">لم يتم تسجيل أدوية في هذه الروشتة</td></tr>`;
+    }
+
+    previewContent.innerHTML = `
+      <div style="font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; color: #1e293b;">
+        <!-- الترويسة الطبية -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #800000; padding-bottom: 12px; margin-bottom: 15px;">
+          <div>
+            <h2 style="margin: 0; font-size: 18px; color: #800000; font-weight: 800;">معمل دكتورة نجلاء لتشخيص أمراض الدواجن</h2>
+            <span style="font-size: 12px; color: #64748b;">الاستشارات الفنية والتشريحية وتحاليل المناعات المتقدمة</span>
+          </div>
+          <div style="text-align: left; font-size: 12px; color: #475569;">
+            <div>📅 تاريخ الكشف: <strong style="color: #0f172a;">${visit.date}</strong></div>
+            <div>🔢 رقم الإيصال: <strong style="color: #0f172a;">${(visit.id || "").replace("visit_", "")}</strong></div>
+          </div>
+        </div>
+
+        <!-- بيانات العميل والعنبر -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 13px;">
+          <div>👤 اسم المربي: <strong style="color: #0284c7;">${breeder.name}</strong></div>
+          <div>🏡 العنبر: <strong>${farmObj.name || "عنبر عام"}</strong></div>
+          <div>🐔 نوع الطيور والسلالة: <strong>${visit.birdType || farmObj.type || "-"} (${visit.breed || farmObj.breed || "-"})</strong></div>
+          <div>⏳ العمر: <strong>${visit.age || "-"}</strong></div>
+        </div>
+
+        <!-- التشخيص النهائي -->
+        <div style="margin-bottom: 15px;">
+          <div style="font-size: 12px; font-weight: 700; color: #800000; margin-bottom: 4px;">🎯 التشخيص النهائي المعتمد:</div>
+          <div style="background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239; font-size: 14px; font-weight: 700; padding: 10px 14px; border-radius: 6px;">
+            ${visit.finalDiagnosis || "تشخيص عام"}
+          </div>
+        </div>
+
+        <!-- جدول الأدوية والتركيبات -->
+        <div style="margin-bottom: 15px; overflow-x: auto;">
+          <table style="width: 100%; border-collapse: collapse; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px;">
+            <thead>
+              <tr style="background: #f1f5f9; border-bottom: 2px solid #cbd5e1; font-size: 12px; color: #475569;">
+                <th style="width: 8%; padding: 10px 6px; text-align: center;">#</th>
+                <th style="width: 52%; padding: 10px; text-align: right;">العلاج والأدوية والتركيبات الموصوفة</th>
+                <th style="width: 40%; padding: 10px; text-align: right;">الجرعة وطريقة الاستخدام والمدة</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${prescriptionsHtml}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- التوصيات والملاحظات -->
+        ${visit.generalNotes ? `
+        <div style="background: #fafaf9; border-right: 3px solid #d97706; padding: 10px 12px; margin-bottom: 15px; font-size: 12px;">
+          <strong style="color: #92400e;">📌 توصيات الطبيبة والأمن البيولوجي:</strong>
+          <p style="margin: 4px 0 0 0; color: #44403c;">${visit.generalNotes}</p>
+        </div>` : ''}
+
+        <!-- التذييل والتوقيع -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 15px; font-size: 12px; color: #64748b;">
+          <div>توقيع طبيب التشخيص: <strong style="color: #800000; font-size: 13px;">د/ نجلاء</strong></div>
+          <div>📍 ميت غمر، الدقهلية - 📞 01287654321</div>
+        </div>
+      </div>
+    `;
+  }
+
+  const modal = document.getElementById("view-prescription-modal");
+  if (modal) modal.classList.add("active");
+}
+
+function closeViewPrescriptionModal() {
+  const modal = document.getElementById("view-prescription-modal");
+  if (modal) modal.classList.remove("active");
+  activePreviewVisit = null;
+}
+
+function printFromPreviewModal() {
+  if (!activePreviewVisit || !activePreviewVisit.breeder || !activePreviewVisit.visit) {
+    showToast("لم يتم تحديد روشتة للطباعة", "warning");
+    return;
+  }
+  printDirectPrescription(activePreviewVisit.breeder, activePreviewVisit.visit);
+}
+
+// ====================================================
+// سجل وأرشيف الروشتات السابقة (Prescriptions Archive)
+// ====================================================
+function renderPrescriptionsLog(searchQuery = "", selectedDate = "") {
+  const tableBody = document.getElementById("prescriptions-log-rows");
+  if (!tableBody) return;
+
+  const searchInput = document.getElementById("prescriptions-search-input");
+  const dateInput = document.getElementById("prescriptions-date-filter");
+  
+  if (searchQuery === "" && searchInput && searchInput.value) {
+    searchQuery = searchInput.value;
+  }
+  if (selectedDate === "" && dateInput && dateInput.value) {
+    selectedDate = dateInput.value;
+  }
+
+  const normQuery = normalizeArabic(searchQuery);
+
+  let allPrescriptions = [];
+  breedersData.forEach(b => {
+    (b.visits || []).forEach(v => {
+      const farmObj = (b.farms || []).find(f => f.id === v.farmId) || {};
+      
+      // نصوص الأدوية للبحث
+      const medsNames = (v.prescriptions || []).map(p => (p.name || p.tradeName || "") + " " + (p.dose || "")).join(" ");
+      
+      allPrescriptions.push({
+        breederId: b.id,
+        breederName: b.name,
+        breederPhone: b.phone || "",
+        farmName: farmObj.name || "عنبر عام",
+        visitId: v.id,
+        date: v.date,
+        age: v.age || "-",
+        finalDiagnosis: v.finalDiagnosis || "تشخيص عام",
+        prescriptions: v.prescriptions || [],
+        medsNames: medsNames,
+        symptoms: v.symptoms || ""
+      });
+    });
+  });
+
+  // تصفية حسب التاريخ والبحث
+  let filtered = allPrescriptions.filter(item => {
+    let matchQuery = true;
+    if (normQuery) {
+      const haystack = normalizeArabic(item.breederName + " " + item.farmName + " " + item.finalDiagnosis + " " + item.medsNames + " " + item.symptoms);
+      matchQuery = haystack.includes(normQuery);
+    }
+
+    let matchDate = true;
+    if (selectedDate) {
+      matchDate = item.date === selectedDate;
+    }
+
+    return matchQuery && matchDate;
+  });
+
+  // ترتيب تنازلي بالأحدث
+  filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  tableBody.innerHTML = "";
+
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center; padding: 30px; color: var(--text-muted);">
+          🔍 لا توجد روشتات سابقة مطابقة للبحث أو التاريخ المحدد
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  filtered.forEach(item => {
+    const tr = document.createElement("tr");
+    
+    // شارات الأدوية
+    let medsBadges = "";
+    if (item.prescriptions.length > 0) {
+      medsBadges = item.prescriptions.map(p => {
+        const n = p.name || p.tradeName || "علاج";
+        const d = p.dose ? ` (${p.dose})` : "";
+        return `<span style="display:inline-block; background:rgba(56, 189, 248, 0.1); color:var(--accent-cyan); border:1px solid rgba(56, 189, 248, 0.2); padding:2px 6px; border-radius:4px; font-size:11px; margin:2px;">💊 ${n}${d}</span>`;
+      }).join(" ");
+    } else {
+      medsBadges = `<span style="color:var(--text-muted); font-size:11px;">بدون أدوية</span>`;
+    }
+
+    tr.innerHTML = `
+      <td>📅 <strong>${item.date}</strong></td>
+      <td>
+        <strong style="color:var(--accent-cyan); cursor:pointer;" onclick="selectBreederFromSearch('${item.breederId}')">
+          ${item.breederName}
+        </strong>
+      </td>
+      <td>${item.farmName} <span style="font-size:11px; color:var(--text-muted);">(${item.age})</span></td>
+      <td><span style="font-weight:bold; color:var(--color-gold);">${item.finalDiagnosis}</span></td>
+      <td><div style="max-width: 300px; max-height: 80px; overflow-y: auto;">${medsBadges}</div></td>
+      <td style="text-align:center;">
+        <div style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;">
+          <button class="btn-primary" style="padding:4px 8px; font-size:11px;" onclick="openViewPrescriptionModal('${item.breederId}', '${item.visitId}')">
+            👁️ معاينة
+          </button>
+          <button class="btn-secondary-outline" style="padding:4px 8px; font-size:11px;" onclick="printSpecificVisitRx('${item.breederId}', '${item.visitId}')">
+            🖨️ طباعة
+          </button>
+        </div>
+      </td>
+    `;
+    tableBody.appendChild(tr);
+  });
+}
+
+function handlePrescriptionsSearch() {
+  const query = document.getElementById("prescriptions-search-input") ? document.getElementById("prescriptions-search-input").value : "";
+  const date = document.getElementById("prescriptions-date-filter") ? document.getElementById("prescriptions-date-filter").value : "";
+  renderPrescriptionsLog(query, date);
+}
+
+function clearPrescriptionFilters() {
+  const searchInput = document.getElementById("prescriptions-search-input");
+  const dateInput = document.getElementById("prescriptions-date-filter");
+  if (searchInput) searchInput.value = "";
+  if (dateInput) dateInput.value = "";
+  renderPrescriptionsLog("", "");
 }
 
 // ====================================================
